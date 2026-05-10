@@ -26,11 +26,11 @@ class LLMProviderConfig(BaseModel):
 
     # 默认模型映射
     DEFAULT_MODELS: dict[str, str] = {
-        "deepseek": "deepseek-moe",
+        "deepseek": "deepseek-chat",
         "doubao": "Doubao-5.0",
         "kimi": "kimi-v",
-        "qwen": "qwen3.6-plus",
-        "openai": "gpt-5.5",
+        "qwen": "qwen3.5-turbo",
+        "openai": "gpt-4o",
     }
 
     def get_base_url(self) -> str:

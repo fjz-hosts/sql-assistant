@@ -7,7 +7,9 @@ from typing import Optional
 
 from .settings import AppSettings, LLMProviderConfig, DatabaseConfig
 
-DEFAULT_CONFIG_DIR = Path.home() / ".sql-assistant"
+# 配置文件放在项目目录下的 .data 文件夹
+PROJECT_DIR = Path(__file__).resolve().parent.parent.parent
+DEFAULT_CONFIG_DIR = PROJECT_DIR / ".data"
 DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "config.yaml"
 
 

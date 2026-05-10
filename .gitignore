@@ -49,14 +49,17 @@ logs/
 # ====================
 # Configuration
 # ====================
-config.yaml
-config.yml
+# 项目数据目录（配置和数据库）
+.data/
+# 旧版配置路径（如存在）
 ~/.sql-assistant/
 .sql-assistant/
 
 # ====================
 # Database
 # ====================
+# 注意：.data 目录下的数据库已在上方排除
+# 忽略其他位置的数据库文件
 *.db
 *.sqlite
 *.sqlite3

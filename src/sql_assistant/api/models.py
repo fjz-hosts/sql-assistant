@@ -9,6 +9,7 @@ from typing import Optional, Any
 class QueryRequest(BaseModel):
     question: str = Field(description="自然语言查询问题")
     db_type_override: Optional[str] = Field(default=None, description="临时切换数据库类型")
+    conversation_id: Optional[int] = Field(default=None, description="对话ID，用于在已有对话中添加消息")
 
 
 class QueryResponse(BaseModel):
@@ -18,6 +19,40 @@ class QueryResponse(BaseModel):
     result: Optional[dict] = None
     error: Optional[str] = None
     history_id: Optional[int] = None
+    conversation_id: Optional[int] = None
+
+
+# ---- Conversation ----
+
+class ConversationRequest(BaseModel):
+    title: Optional[str] = Field(default="", description="对话标题")
+
+
+class ConversationUpdateRequest(BaseModel):
+    title: str = Field(description="新的对话标题")
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    title: str
+    created_at: str = ""
+    updated_at: str = ""
+    message_count: int = 0
+
+
+class ConversationDetailResponse(BaseModel):
+    id: int
+    title: str
+    created_at: str = ""
+    updated_at: str = ""
+    messages: list["HistoryRecord"] = Field(default_factory=list)
+
+
+class ConversationListResponse(BaseModel):
+    conversations: list[ConversationResponse]
+    total: int
+    limit: int
+    offset: int
 
 
 # ---- Config: LLM ----
@@ -87,6 +122,7 @@ class AppSettingsResponse(BaseModel):
 
 class HistoryRecord(BaseModel):
     id: int
+    conversation_id: Optional[int] = None
     question: str
     sql: str
     result_json: Optional[str] = None

@@ -23,11 +23,7 @@
 
 ## 🗞️ News
 
-- **2026-05-10** — 新增 MongoDB 数据库支持
-- **2026-05-05** — 优化 SQL 生成提示词模板，提升生成准确率
-- **2026-04-28** — 新增 Claude 3 系列模型支持
-- **2026-04-20** — 支持 SSE 流式响应，实时查看 LLM 生成过程
-- **2026-04-15** — 初始版本发布，支持多数据库和多 LLM 提供商
+- **2026-05-10** — 🎉 SQL 智能助手 v1.0.0 正式发布！
 
 
 ## 📖 Overview
@@ -39,9 +35,11 @@
 - **自然语言转 SQL**：用中文/英文描述查询需求，AI 自动生成 SQL 并执行
 - **多数据库支持**：MySQL / SQL Server / PostgreSQL / Redis / MongoDB
 - **多 LLM 支持**：DeepSeek / 豆包 / Kimi / 通义千问 / OpenAI / Gemini / Claude
-- **查询历史**：所有查询记录自动保存，可回溯查看
+- **对话管理**：支持新建、删除、切换、重命名对话会话
+- **主题定制**：支持亮色/暗色主题切换，8 种主题色可选
 - **配置界面**：Web UI 中直接管理 LLM API Key 和数据库连接
 - **流式响应**：支持 SSE 流式输出，实时查看 LLM 生成过程
+- **数据持久化**：SQLite 本地存储，配置文件统一管理
 
 
 ## <a id="quick-start"></a> 🚀 Quick Start
@@ -118,13 +116,20 @@ sql-assistant
 - **Gemini**：支持 Google Gemini 2.0 Pro/Flash 系列模型
 - **Claude**：支持 Anthropic Claude Opus 4.7 / Sonnet 4.6 / Haiku 4.5 系列模型
 
-### 4. 查询历史管理
+### 4. 对话管理
 
-- **自动保存**：所有查询记录自动保存到本地 SQLite 数据库
-- **历史回溯**：支持查看和重新执行历史查询
-- **查询统计**：记录查询执行时间和结果信息
+- **多会话支持**：创建多个独立对话，每个对话独立管理查询历史
+- **对话重命名**：双击对话标题或点击铅笔图标重命名
+- **删除对话**：点击垃圾桶图标删除对话及关联历史
+- **智能命名**：新建对话时自动以第一句问题作为标题
 
-### 5. Web 配置界面
+### 5. 主题定制
+
+- **亮色/暗色模式**：一键切换浅色和深色主题
+- **8 种主题色**：蓝色、紫色、粉色、红色、橙色、黄色、绿色、青色
+- **主题记忆**：自动记住用户主题偏好设置
+
+### 6. Web 配置界面
 
 - **LLM 配置管理**：添加、编辑、删除 LLM API Key
 - **数据库配置管理**：添加、编辑、删除数据库连接
@@ -182,6 +187,11 @@ sql-assistant
 ```
 SQL Assistant/
 ├── pyproject.toml                # Python项目配置文件（依赖管理）
+├── README.md                     # 项目文档
+├── LICENSE                       # MIT 开源协议
+├── .data/                        # 数据存储目录
+│   ├── config.yaml               # 配置文件（API Key 等）
+│   └── history.db                # SQLite 数据库（查询历史）
 ├── .venv/                        # uv 虚拟环境
 └── src/
     └── sql_assistant/
@@ -222,9 +232,12 @@ SQL Assistant/
             │   └── index.html    # 主页面
             └── static/           # 静态资源
                 ├── css/
-                │   └── style.css
+                │   ├── theme.css     # 主题样式（CSS变量）
+                │   └── style.css     # 应用样式
                 └── js/
-                    └── app.js
+                    ├── theme-manager.js       # 主题切换逻辑
+                    ├── color-theme-manager.js # 主题色切换逻辑
+                    └── app.js                # 应用主逻辑
 ```
 
 
@@ -232,7 +245,16 @@ SQL Assistant/
 
 ### 配置文件位置
 
-配置文件存储在 `~/.sql-assistant/config.yaml`，所有敏感信息（如 API Key）均加密存储。
+配置文件和数据存储位置已迁移至项目 `.data` 目录：
+
+```
+SQL Assistant/
+└── .data/
+    ├── config.yaml               # 配置文件（API Key 等）
+    └── history.db                # SQLite 数据库（查询历史）
+```
+
+> ⚠️ **注意**：旧版本存储在 `~/.sql-assistant/` 的配置文件需要手动迁移到项目 `.data` 目录。
 
 ### 配置项说明
 
@@ -340,16 +362,18 @@ uv pip install psycopg2-binary
 | 端点 | 方法 | 描述 |
 |------|------|------|
 | `/api/query` | POST | 执行自然语言查询 |
+| `/api/conversations` | GET/POST | 获取对话列表 / 创建新对话 |
+| `/api/conversations/{id}` | GET/PUT/DELETE | 获取/更新/删除单个对话 |
 | `/api/config/llm` | GET/POST | LLM 配置管理 |
 | `/api/config/database` | GET/POST | 数据库配置管理 |
 | `/api/config/active` | GET/PUT | 激活配置管理 |
 | `/api/history` | GET | 查询历史列表 |
-| `/api/history/{id}` | GET/DELETE | 单个历史记录操作 |
 
 
 ## ⚠️ 注意事项
 
-- **API Key 安全**：所有配置加密存储在 `~/.sql-assistant/config.yaml`
+- **数据目录**：配置文件和数据库已移至项目 `.data` 目录，请确保该目录有适当权限
+- **API Key 安全**：所有配置存储在 `.data/config.yaml`，建议定期备份
 - **危险操作警告**：执行 DELETE/UPDATE 前请确认 WHERE 条件
 - **数据库权限**：建议使用只读权限的数据库用户进行查询操作
 - **网络安全**：建议在生产环境中使用 HTTPS 协议
