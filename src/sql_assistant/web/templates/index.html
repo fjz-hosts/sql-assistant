@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL 智能助手</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-logo">🔍 SQL 助手</h1>
+                <button class="btn-icon" id="btn-settings" title="设置">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+            </div>
+
+            <!-- 当前连接状态 -->
+            <div class="connection-status" id="connection-status">
+                <span class="status-dot offline"></span>
+                <span class="status-text">未配置连接</span>
+                <button class="btn-icon btn-schema-refresh" id="btn-refresh-schema" title="刷新 Schema" style="display:none; margin-left: auto; padding: 4px 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                </button>
+            </div>
+
+            <!-- 历史记录 -->
+            <div class="history-section">
+                <div class="history-header">
+                    <h3>查询历史</h3>
+                    <button class="btn-text" id="btn-clear-history">清空</button>
+                </div>
+                <div class="history-list" id="history-list">
+                    <div class="history-empty">暂无查询记录</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="chat-container">
+                <!-- 消息区域 -->
+                <div class="chat-messages" id="chat-messages">
+                    <div class="welcome-message">
+                        <div class="welcome-icon">💬</div>
+                        <h2>SQL 智能助手</h2>
+                        <p>用自然语言描述你的查询需求，AI 会帮你生成 SQL 并执行</p>
+                        <p class="welcome-hint">请先在设置中配置 LLM API Key 和数据库连接</p>
+                        <div class="welcome-examples">
+                            <span class="example-tag" data-question="查询所有用户信息">查询所有用户信息</span>
+                            <span class="example-tag" data-question="统计每个部门的员工数量">统计每个部门的员工数量</span>
+                            <span class="example-tag" data-question="添加一条商品记录，名称 iPhone 15，价格 6999">添加商品记录</span>
+                            <span class="example-tag" data-question="查询最近7天的订单">查询最近7天订单</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输入区域 -->
+                <div class="chat-input-container">
+                    <form id="query-form" class="chat-input-form">
+                        <textarea
+                            id="query-input"
+                            placeholder="输入自然语言查询，例如：查询所有用户的姓名和邮箱"
+                            rows="1"
+                            autocomplete="off"
+                        ></textarea>
+                        <button type="submit" class="btn-send" id="btn-send" disabled>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        </button>
+                    </form>
+                    <p class="input-hint">按 Enter 发送，Shift+Enter 换行</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>⚙️ 设置</h2>
+                <button class="btn-icon" id="btn-close-modal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab 切换 -->
+                <div class="settings-tabs">
+                    <button class="tab-btn active" data-tab="llm">🤖 LLM 配置</button>
+                    <button class="tab-btn" data-tab="database">🗄️ 数据库配置</button>
+                    <button class="tab-btn" data-tab="about">ℹ️ 关于</button>
+                </div>
+
+                <!-- LLM 配置面板 -->
+                <div class="tab-panel active" id="tab-llm">
+                    <div class="config-list" id="llm-config-list"></div>
+                    <button class="btn-add" id="btn-add-llm">+ 添加 LLM 提供商</button>
+
+                    <!-- LLM 编辑表单 -->
+                    <div class="config-form" id="llm-form" style="display:none;">
+                        <h4 id="llm-form-title">添加 LLM 提供商</h4>
+                        <div class="form-group">
+                            <label>配置名称</label>
+                            <input type="text" id="llm-name" placeholder="如：我的DeepSeek" required>
+                        </div>
+                        <div class="form-group">
+                            <label>提供商</label>
+                            <select id="llm-provider">
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="doubao">豆包 (Doubao)</option>
+                                <option value="kimi">Kimi (Moonshot)</option>
+                                <option value="qwen">通义千问 (Qwen)</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="claude">Anthropic Claude</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="llm-api-key" placeholder="sk-..." required>
+                        </div>
+                        <div class="form-group">
+                            <label>Base URL（可选，留空使用默认）</label>
+                            <input type="text" id="llm-base-url" placeholder="自动填充默认地址">
+                        </div>
+                        <div class="form-group">
+                            <label>模型名称（可选，留空使用默认）</label>
+                            <input type="text" id="llm-model" placeholder="自动填充默认模型">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-primary" id="btn-save-llm">保存</button>
+                            <button class="btn-text" id="btn-cancel-llm">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据库配置面板 -->
+                <div class="tab-panel" id="tab-database">
+                    <div class="config-list" id="db-config-list"></div>
+                    <button class="btn-add" id="btn-add-db">+ 添加数据库连接</button>
+
+                    <!-- DB 编辑表单 -->
+                    <div class="config-form" id="db-form" style="display:none;">
+                        <h4 id="db-form-title">添加数据库连接</h4>
+                        <div class="form-group">
+                            <label>连接名称</label>
+                            <input type="text" id="db-name" placeholder="如：生产MySQL" required>
+                        </div>
+                        <div class="form-group">
+                            <label>数据库类型</label>
+                            <select id="db-type">
+                                <option value="mysql">MySQL</option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="sqlserver">SQL Server</option>
+                                <option value="redis">Redis</option>
+                                <option value="mongodb">MongoDB</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>主机地址</label>
+                            <input type="text" id="db-host" placeholder="localhost" required>
+                        </div>
+                        <div class="form-group">
+                            <label>端口（留空使用默认）</label>
+                            <input type="number" id="db-port" placeholder="自动填充">
+                        </div>
+                        <div class="form-group">
+                            <label>用户名</label>
+                            <input type="text" id="db-user" placeholder="root">
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" id="db-password" placeholder="数据库密码">
+                        </div>
+                        <div class="form-group">
+                            <label>数据库名</label>
+                            <input type="text" id="db-database" placeholder="数据库名称" required>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-primary" id="btn-save-db">保存</button>
+                            <button class="btn-primary btn-test" id="btn-test-db">测试连接</button>
+                            <button class="btn-text" id="btn-cancel-db">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关于面板 -->
+                <div class="tab-panel" id="tab-about">
+                    <div class="about-content">
+                        <h3>SQL 智能助手 v1.0.0</h3>
+                        <p>自然语言 → SQL → 查询结果</p>
+                        <div class="about-features">
+                            <h4>功能特性</h4>
+                            <ul>
+                                <li>自然语言转 SQL（增删改查）</li>
+                                <li>支持 MySQL / SQL Server / PostgreSQL / Redis / MongoDB</li>
+                                <li>支持 DeepSeek / 豆包 / Kimi / 通义千问 / Gemini / Claude / OpenAI</li>
+                                <li>查询历史自动保存</li>
+                                <li>流式响应</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

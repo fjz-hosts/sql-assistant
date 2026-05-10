@@ -1,0 +1,106 @@
+# ====================
+# Virtual Environment
+# ====================
+.venv/
+.env/
+env/
+venv/
+
+# ====================
+# Python
+# ====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# ====================
+# Build Artifacts
+# ====================
+dist/
+build/
+*.whl
+
+# ====================
+# IDE
+# ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ====================
+# OS
+# ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ====================
+# Logs
+# ====================
+*.log
+logs/
+*.log.*
+
+# ====================
+# Configuration
+# ====================
+config.yaml
+config.yml
+~/.sql-assistant/
+.sql-assistant/
+
+# ====================
+# Database
+# ====================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ====================
+# Trae IDE
+# ====================
+.codegraph/
+${APPDATA}/
+
+# ====================
+# DeepSeek
+# ====================
+.deepseek/
+
+# ====================
+# Node.js (if any)
+# ====================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ====================
+# Testing
+# ====================
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+test-results/
+
+# ====================
+# Security
+# ====================
+*.pem
+*.key
+*.cert
+secrets/
+
+# ====================
+# Misc
+# ====================
+.cache/
+*.egg
+.installed.cfg
