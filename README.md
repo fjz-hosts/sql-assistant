@@ -47,47 +47,57 @@
 ### Prerequisites
 
 - **Python** >= 3.10
-- **uv** >= 0.1.0
 
-### 1. Clone & Install
+### Option 1: Install from GitHub Release (Recommended)
+
+Download and install directly from the Release page:
 
 ```bash
-git clone <项目仓库地址>
-cd "SQL Assistant"
+# Install latest version (replace with your Release URL)
+pip install https://github.com/your-username/sql-assistant/releases/download/v1.0.0/sql_assistant-1.0.0-py3-none-any.whl
+
+# Install with optional dependencies
+pip install "sql-assistant[sqlserver,gemini,claude]"
 ```
 
-### 2. Install uv & Dependencies
+### Option 2: Install from Source (Development Mode)
 
 ```bash
-# 安装 uv 工具
+git clone <repository-url>
+cd "SQL Assistant"
+
+# Install uv tool
 pip install uv
 
-# 创建虚拟环境并安装依赖
+# Create virtual environment and install dependencies
 uv venv
 uv pip install -e .
 ```
 
-### 3. Run Development Server
+### Start Server
 
 ```bash
-# 方式一：使用 Python 模块启动
-.venv\Scripts\python.exe -m sql_assistant.main
-
-# 方式二：使用 CLI 命令启动
+# Option 1: Use CLI command (Recommended)
 sql-assistant
+
+# Option 2: Use Python module
+python -m sql_assistant.main
+
+# Option 3: Use uvicorn directly (with custom parameters)
+uvicorn sql_assistant.main:app --host 0.0.0.0 --port 8000
 ```
 
-### 4. Open Browser
+### Open Browser
 
-访问 **http://localhost:5010** 开始使用！
+Visit **http://localhost:5010** to start using!
 
-### 5. Initial Configuration
+### Initial Configuration
 
-1. 点击左侧 ⚙️ 设置按钮
-2. 在「LLM 配置」中添加你的 API Key
-3. 在「数据库配置」中添加数据库连接
-4. 分别点击「激活」选择当前使用的 LLM 和数据库
-5. 开始查询！
+1. Click the ⚙️ Settings button on the left
+2. Add your API Key in "LLM Configuration"
+3. Add database connections in "Database Configuration"
+4. Click "Activate" to select your preferred LLM and database
+5. Start querying!
 
 
 ## <a id="features"></a> ✨ Features
