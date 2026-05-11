@@ -135,6 +135,14 @@ sql-assistant
 - **数据库配置管理**：添加、编辑、删除数据库连接
 - **激活状态切换**：一键切换当前使用的 LLM 和数据库
 
+### 7. 数据库备份
+
+- **全量备份**：备份所有表的结构和数据
+- **增量备份**：只备份上次备份后新增或修改的数据（需要表中包含时间戳字段）
+- **选择性备份**：支持指定部分表进行备份，默认备份所有表
+- **备份管理**：查看备份列表、获取备份详情、删除备份文件
+- **数据恢复**：从备份文件中恢复表结构和数据到当前数据库
+
 
 ## <a id="system-architecture"></a> 🏗️ System Architecture
 
@@ -189,6 +197,11 @@ SQL Assistant/
 ├── pyproject.toml                # Python项目配置文件（依赖管理）
 ├── README.md                     # 项目文档
 ├── LICENSE                       # MIT 开源协议
+├── backups/                      # 数据库备份存储目录
+│   └── full_20260101_120000/     # 按时间戳命名的备份文件夹
+│       ├── metadata.json         # 备份元信息
+│       ├── users_schema.json     # 表结构文件
+│       └── users_data.json       # 表数据文件
 ├── .data/                        # 数据存储目录
 │   ├── config.yaml               # 配置文件（API Key 等）
 │   └── history.db                # SQLite 数据库（查询历史）
@@ -218,6 +231,7 @@ SQL Assistant/
         │   ├── __init__.py
         │   ├── manager.py        # 数据库连接管理器
         │   ├── history.py        # 查询历史 (SQLite)
+        │   ├── backup.py         # 数据库备份模块
         │   └── connectors/       # 数据库连接器
         │       ├── __init__.py
         │       ├── base.py       # 连接器抽象基类
@@ -255,6 +269,30 @@ SQL Assistant/
 ```
 
 > ⚠️ **注意**：旧版本存储在 `~/.sql-assistant/` 的配置文件需要手动迁移到项目 `.data` 目录。
+
+### 数据库备份存储
+
+数据库备份文件存储在项目根目录的 `backups/` 文件夹中：
+
+```
+SQL Assistant/
+└── backups/
+    ├── .last_backup_timestamp     # 增量备份时间戳标记
+    ├── full_20260101_120000/     # 全量备份
+    │   ├── metadata.json         # 备份元信息（类型、表数、记录数等）
+    │   ├── users_schema.json     # users 表结构
+    │   └── users_data.json       # users 表数据
+    └── incremental_20260102_120000/  # 增量备份
+        ├── metadata.json
+        ├── orders_schema.json
+        └── orders_data.json
+```
+
+备份文件说明：
+- `metadata.json`：包含备份类型、数据库信息、表数量、记录总数、备份时间等元信息
+- `*_schema.json`：表的结构信息（列名、类型、键信息等）
+- `*_data.json`：表的数据内容（JSON 格式）
+- `.last_backup_timestamp`：记录上次增量备份的时间戳
 
 ### 配置项说明
 
@@ -368,6 +406,10 @@ uv pip install psycopg2-binary
 | `/api/config/database` | GET/POST | 数据库配置管理 |
 | `/api/config/active` | GET/PUT | 激活配置管理 |
 | `/api/history` | GET | 查询历史列表 |
+| `/api/backup` | POST | 创建数据库备份 |
+| `/api/backup/list` | GET | 获取备份列表 |
+| `/api/backup/{backup_id}` | GET/DELETE | 获取备份详情 / 删除备份 |
+| `/api/backup/restore` | POST | 从备份恢复数据库 |
 
 
 ## ⚠️ 注意事项

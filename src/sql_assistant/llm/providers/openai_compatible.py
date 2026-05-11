@@ -64,6 +64,25 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                     except Exception:
                         continue
 
+    async def test_connection(self) -> dict:
+        """测试 LLM 连接是否正常"""
+        try:
+            client = await self._get_client()
+            url = f"{self.base_url}/chat/completions"
+            payload = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": "Hello"}],
+                "temperature": 0,
+                "max_tokens": 1,
+            }
+            response = await client.post(url, json=payload, timeout=30.0)
+            if response.status_code == 200:
+                return {"success": True, "message": "LLM 连接测试成功"}
+            else:
+                return {"success": False, "message": f"连接失败: {response.status_code}"}
+        except Exception as e:
+            return {"success": False, "message": f"连接失败: {str(e)}"}
+
     async def close(self):
         if self._client:
             await self._client.aclose()

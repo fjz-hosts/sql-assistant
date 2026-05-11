@@ -15,10 +15,12 @@ from .models import (
     QueryRequest, QueryResponse,
     LLMConfigRequest, LLMConfigResponse,
     DatabaseConfigRequest, DatabaseConfigResponse,
-    TestConnectionRequest, TestConnectionResponse,
+    TestConnectionRequest, TestConnectionResponse, TestLLMConnectionRequest,
     AppSettingsResponse, HistoryRecord, HistoryListResponse,
     ConversationRequest, ConversationResponse, ConversationDetailResponse,
     ConversationListResponse, ConversationUpdateRequest,
+    BackupRequest, BackupResponse, BackupInfoResponse, BackupListResponse,
+    RestoreRequest, RestoreResponse,
 )
 
 router = APIRouter(prefix="/api")
@@ -316,6 +318,31 @@ async def set_active_llm(name: str):
     return {"ok": True}
 
 
+@router.post("/config/llm/test", response_model=TestConnectionResponse)
+async def test_llm_connection(req: TestLLMConnectionRequest):
+    llm = get_llm()
+    config_mgr = get_config()
+
+    if req.config:
+        llm_config = LLMProviderConfig(**req.config.model_dump())
+        from ..llm.manager import LLMManager
+        llm_manager = LLMManager()
+        provider = llm_manager.get_provider(llm_config)
+        result = await provider.test_connection()
+    elif req.name:
+        llm_config = config_mgr.get_llm_provider(req.name)
+        if not llm_config:
+            raise HTTPException(status_code=404, detail="LLM 配置不存在")
+        from ..llm.manager import LLMManager
+        llm_manager = LLMManager()
+        provider = llm_manager.get_provider(llm_config)
+        result = await provider.test_connection()
+    else:
+        result = {"success": False, "message": "请提供 LLM 配置名称或完整配置"}
+
+    return TestConnectionResponse(**result)
+
+
 # ---- Config: Database ----
 
 @router.get("/config/database", response_model=list[DatabaseConfigResponse])
@@ -471,3 +498,115 @@ async def get_history_record(record_id: int):
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
     return record
+
+
+# ---- Backup ----
+
+@router.post("/backup", response_model=BackupResponse)
+async def create_backup(request: BackupRequest):
+    """创建数据库备份"""
+    from ..database.backup import get_backup_manager, BackupConfig
+    
+    backup_manager = get_backup_manager()
+    
+    config = BackupConfig(
+        backup_type=request.backup_type,
+        tables=request.tables,
+        include_schema=request.include_schema,
+        include_data=request.include_data
+    )
+    
+    result = await backup_manager.backup(config)
+    
+    return BackupResponse(
+        success=result.success,
+        message=result.message,
+        backup_id=result.backup_id,
+        backup_path=result.backup_path,
+        tables_backed_up=result.tables_backed_up,
+        total_records=result.total_records,
+        backup_size=result.backup_size,
+        backup_time=result.backup_time
+    )
+
+
+@router.get("/backup/list", response_model=BackupListResponse)
+async def list_backups():
+    """获取备份列表"""
+    from ..database.backup import get_backup_manager
+    
+    backup_manager = get_backup_manager()
+    backups = backup_manager.list_backups()
+    
+    return BackupListResponse(
+        backups=[BackupInfoResponse(
+            backup_id=b.backup_id,
+            backup_type=b.backup_type,
+            db_type=b.db_type,
+            db_name=b.db_name,
+            tables=b.tables,
+            record_count=b.record_count,
+            backup_time=b.backup_time,
+            file_size=b.file_size
+        ) for b in backups],
+        total=len(backups)
+    )
+
+
+@router.get("/backup/{backup_id}", response_model=BackupInfoResponse)
+async def get_backup_info(backup_id: str):
+    """获取指定备份的详细信息"""
+    from ..database.backup import get_backup_manager
+    
+    backup_manager = get_backup_manager()
+    backup_info = backup_manager.get_backup_info(backup_id)
+    
+    if not backup_info:
+        raise HTTPException(status_code=404, detail="备份不存在")
+    
+    return BackupInfoResponse(
+        backup_id=backup_info.backup_id,
+        backup_type=backup_info.backup_type,
+        db_type=backup_info.db_type,
+        db_name=backup_info.db_name,
+        tables=backup_info.tables,
+        record_count=backup_info.record_count,
+        backup_time=backup_info.backup_time,
+        file_size=backup_info.file_size
+    )
+
+
+@router.delete("/backup/{backup_id}")
+async def delete_backup(backup_id: str):
+    """删除指定备份"""
+    from ..database.backup import get_backup_manager
+    
+    backup_manager = get_backup_manager()
+    
+    if not backup_manager.delete_backup(backup_id):
+        raise HTTPException(status_code=404, detail="备份不存在")
+    
+    return {"ok": True, "message": "备份删除成功"}
+
+
+@router.post("/backup/restore", response_model=RestoreResponse)
+async def restore_backup(request: RestoreRequest):
+    """从备份恢复数据库"""
+    from ..database.backup import get_backup_manager
+    
+    backup_manager = get_backup_manager()
+    
+    result = await backup_manager.restore(
+        backup_id=request.backup_id,
+        restore_schema=request.restore_schema,
+        restore_data=request.restore_data,
+        tables=request.tables
+    )
+    
+    return RestoreResponse(
+        success=result.success,
+        message=result.message,
+        backup_id=result.backup_id,
+        tables_restored=result.tables_restored,
+        total_records=result.total_records
+    )

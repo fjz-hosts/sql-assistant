@@ -1,7 +1,7 @@
 """API 数据模型"""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 
 # ---- Query ----
@@ -103,6 +103,12 @@ class TestConnectionRequest(BaseModel):
     config: Optional[DatabaseConfigRequest] = None
 
 
+class TestLLMConnectionRequest(BaseModel):
+    """测试 LLM 连接请求"""
+    name: Optional[str] = None
+    config: Optional[LLMConfigRequest] = None
+
+
 class TestConnectionResponse(BaseModel):
     success: bool
     message: str
@@ -138,3 +144,60 @@ class HistoryListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+# ---- Backup ----
+
+class BackupRequest(BaseModel):
+    """备份请求模型"""
+    backup_type: str = Field(default="full", description="备份类型: full(全量备份) / incremental(增量备份)")
+    tables: Optional[List[str]] = Field(default=None, description="要备份的表名列表，为空则备份所有表")
+    include_schema: bool = Field(default=True, description="是否包含表结构")
+    include_data: bool = Field(default=True, description="是否包含数据")
+
+
+class BackupResponse(BaseModel):
+    """备份响应模型"""
+    success: bool
+    message: str
+    backup_id: str = ""
+    backup_path: str = ""
+    tables_backed_up: List[str] = Field(default_factory=list)
+    total_records: int = 0
+    backup_size: int = 0  # bytes
+    backup_time: str = ""
+
+
+class BackupInfoResponse(BaseModel):
+    """备份信息响应模型"""
+    backup_id: str
+    backup_type: str
+    db_type: str = ""
+    db_name: str = ""
+    tables: List[str] = Field(default_factory=list)
+    record_count: int = 0
+    backup_time: str = ""
+    file_size: int = 0  # bytes
+
+
+class BackupListResponse(BaseModel):
+    """备份列表响应模型"""
+    backups: List[BackupInfoResponse]
+    total: int
+
+
+class RestoreRequest(BaseModel):
+    """恢复备份请求模型"""
+    backup_id: str = Field(description="要恢复的备份ID")
+    restore_schema: bool = Field(default=False, description="是否重建表结构（谨慎使用，会删除现有表）")
+    restore_data: bool = Field(default=True, description="是否恢复数据")
+    tables: Optional[List[str]] = Field(default=None, description="指定要恢复的表，为空则恢复所有表")
+
+
+class RestoreResponse(BaseModel):
+    """恢复备份响应模型"""
+    success: bool
+    message: str
+    backup_id: str = ""
+    tables_restored: List[str] = Field(default_factory=list)
+    total_records: int = 0

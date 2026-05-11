@@ -21,3 +21,8 @@ class BaseLLMProvider(ABC):
     async def chat_stream(self, messages: list[dict], temperature: float = 0.1) -> AsyncGenerator[str, None]:
         """发送流式对话请求"""
         ...
+
+    @abstractmethod
+    async def test_connection(self) -> dict:
+        """测试连接是否正常"""
+        ...

@@ -93,6 +93,25 @@ class ClaudeProvider(BaseLLMProvider):
                     except Exception:
                         continue
 
+    async def test_connection(self) -> dict:
+        """测试 Claude 连接是否正常"""
+        try:
+            client = await self._get_client()
+            url = "https://api.anthropic.com/v1/messages"
+            payload = {
+                "model": self.model,
+                "max_tokens": 1,
+                "temperature": 0,
+                "messages": [{"role": "user", "content": "Hello"}],
+            }
+            response = await client.post(url, json=payload, timeout=30.0)
+            if response.status_code == 200:
+                return {"success": True, "message": "Claude 连接测试成功"}
+            else:
+                return {"success": False, "message": f"连接失败: {response.status_code}"}
+        except Exception as e:
+            return {"success": False, "message": f"连接失败: {str(e)}"}
+
     async def close(self):
         if self._client:
             await self._client.aclose()

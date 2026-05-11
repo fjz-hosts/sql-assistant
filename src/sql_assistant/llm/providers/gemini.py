@@ -89,6 +89,24 @@ class GeminiProvider(BaseLLMProvider):
                     except Exception:
                         continue
 
+    async def test_connection(self) -> dict:
+        """测试 Gemini 连接是否正常"""
+        try:
+            client = await self._get_client()
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+            params = {"key": self.api_key}
+            payload = {
+                "contents": [{"role": "user", "parts": [{"text": "Hello"}]}],
+                "generationConfig": {"temperature": 0, "maxOutputTokens": 1},
+            }
+            response = await client.post(url, params=params, json=payload, timeout=30.0)
+            if response.status_code == 200:
+                return {"success": True, "message": "Gemini 连接测试成功"}
+            else:
+                return {"success": False, "message": f"连接失败: {response.status_code}"}
+        except Exception as e:
+            return {"success": False, "message": f"连接失败: {str(e)}"}
+
     async def close(self):
         if self._client:
             await self._client.aclose()
