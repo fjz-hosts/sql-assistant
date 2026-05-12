@@ -54,7 +54,7 @@ Download and install directly from the Release page:
 
 ```bash
 # Install latest version (replace with your Release URL)
-pip install https://github.com/your-username/sql-assistant/releases/download/v1.0.0/sql_assistant-1.0.0-py3-none-any.whl
+pip install https://github.com/fjz-hosts/sql-assistant/releases/download/sql-assistant-v1.0.0/sql_assistant-1.0.0-py3-none-any.whl
 
 # Install with optional dependencies
 pip install "sql-assistant[sqlserver,gemini,claude]"
@@ -63,8 +63,8 @@ pip install "sql-assistant[sqlserver,gemini,claude]"
 ### Option 2: Install from Source (Development Mode)
 
 ```bash
-git clone <repository-url>
-cd "SQL Assistant"
+git clone https://github.com/fjz-hosts/sql-assistant.git
+cd sql-assistant
 
 # Install uv tool
 pip install uv
