@@ -369,9 +369,12 @@ async def test_llm_connection(req: TestLLMConnectionRequest):
         provider = llm_manager.get_provider(llm_config)
         result = await provider.test_connection()
     else:
-        result = {"success": False, "message": "请提供 LLM 配置名称或完整配置"}
+        result = {"success": False, "error": "请提供 LLM 配置名称或完整配置"}
 
-    return TestConnectionResponse(**result)
+    return TestConnectionResponse(
+        success=result.get("success", False),
+        message=result.get("message") or (result.get("data") or {}).get("message") or result.get("error") or "未知错误",
+    )
 
 
 # ---- Config: Database ----
@@ -427,9 +430,12 @@ async def test_database_connection(req: TestConnectionRequest):
             raise HTTPException(status_code=404, detail="数据库配置不存在")
         result = await db.test_connection(db_config)
     else:
-        result = {"success": False, "message": "请提供数据库名称或完整配置"}
+        result = {"success": False, "error": "请提供数据库名称或完整配置"}
 
-    return TestConnectionResponse(**result)
+    return TestConnectionResponse(
+        success=result.get("success", False),
+        message=result.get("message") or (result.get("data") or {}).get("message") or result.get("error") or "未知错误",
+    )
 
 
 # ---- Schema ----
