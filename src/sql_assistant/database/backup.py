@@ -474,45 +474,61 @@ class BackupManager:
         if not columns or not rows:
             return 0
         
-        # 根据数据库类型调整数据插入方式
         total_inserted = 0
+        batch_size = 100
+        col_names = ", ".join(columns)
         
-        for row in rows:
-            # 将数据转换回合适的类型
-            values = self._convert_data_types(row, columns)
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i:i + batch_size]
+            value_groups = []
+            for row in batch:
+                escaped_values = []
+                for item in row:
+                    if item is None:
+                        escaped_values.append("NULL")
+                    elif isinstance(item, bool):
+                        escaped_values.append("1" if item else "0")
+                    elif isinstance(item, (int, float)):
+                        escaped_values.append(str(item))
+                    elif isinstance(item, str):
+                        escaped_item = item.replace("'", "''")
+                        escaped_values.append(f"'{escaped_item}'")
+                    else:
+                        escaped_item = str(item).replace("'", "''")
+                        escaped_values.append(f"'{escaped_item}'")
+                value_groups.append(f"({', '.join(escaped_values)})")
             
-            # 构建 INSERT 语句
-            placeholders = ", ".join(["?" for _ in columns])
-            insert_sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+            insert_sql = f"INSERT INTO {table_name} ({col_names}) VALUES {', '.join(value_groups)}"
             
             try:
-                await connector.execute(insert_sql, values)
-                total_inserted += 1
-            except Exception as e:
-                # 跳过插入失败的行
-                continue
+                await connector.execute(insert_sql)
+                total_inserted += len(batch)
+            except Exception:
+                if len(batch) == 1:
+                    continue
+                for row in batch:
+                    escaped_values = []
+                    for item in row:
+                        if item is None:
+                            escaped_values.append("NULL")
+                        elif isinstance(item, bool):
+                            escaped_values.append("1" if item else "0")
+                        elif isinstance(item, (int, float)):
+                            escaped_values.append(str(item))
+                        elif isinstance(item, str):
+                            escaped_item = item.replace("'", "''")
+                            escaped_values.append(f"'{escaped_item}'")
+                        else:
+                            escaped_item = str(item).replace("'", "''")
+                            escaped_values.append(f"'{escaped_item}'")
+                    single_sql = f"INSERT INTO {table_name} ({col_names}) VALUES ({', '.join(escaped_values)})"
+                    try:
+                        await connector.execute(single_sql)
+                        total_inserted += 1
+                    except Exception:
+                        continue
         
         return total_inserted
-
-    def _convert_data_types(self, row: list, columns: list) -> list:
-        """将 JSON 中的数据转换回合适的 Python 类型"""
-        converted = []
-        for i, item in enumerate(row):
-            if item is None:
-                converted.append(None)
-            elif isinstance(item, str):
-                # 尝试转换 ISO 格式的时间字符串
-                for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%d"]:
-                    try:
-                        converted.append(datetime.strptime(item, fmt))
-                        break
-                    except ValueError:
-                        continue
-                else:
-                    converted.append(item)
-            else:
-                converted.append(item)
-        return converted
 
 
 # 全局单例
