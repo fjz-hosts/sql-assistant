@@ -97,13 +97,14 @@ class MySQLConnector(BaseConnector):
 
         return await loop.run_in_executor(None, _run)
 
-    async def test_connection(self) -> bool:
+    async def test_connection(self) -> dict:
+        from .exceptions import format_connector_result
         try:
             await self.connect()
             if self._conn:
                 self._conn.ping(reconnect=False)
-            return True
-        except Exception:
-            return False
+            return format_connector_result(True, data={"message": "MySQL 连接成功"}, db_type="mysql")
+        except Exception as e:
+            return format_connector_result(False, error=str(e), db_type="mysql", code="CONNECTION_FAILED")
         finally:
             await self.disconnect()

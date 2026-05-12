@@ -4,6 +4,8 @@ import httpx
 from typing import AsyncGenerator, Optional
 
 from ..base import BaseLLMProvider
+from ..retry import async_retry
+from ..exceptions import LLMConnectionError, LLMResponseError
 
 
 class OpenAICompatibleProvider(BaseLLMProvider):
@@ -25,6 +27,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             )
         return self._client
 
+    @async_retry(max_attempts=3, base_delay=1.0, retryable_exceptions=(httpx.HTTPError,))
     async def chat(self, messages: list[dict], temperature: float = 0.1) -> str:
         client = await self._get_client()
         url = f"{self.base_url}/chat/completions"
@@ -34,9 +37,16 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             "temperature": temperature,
         }
         response = await client.post(url, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise LLMConnectionError(f"LLM 请求失败: {e.response.status_code} - {e.response.text}", self.provider_name)
+
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        try:
+            return data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as e:
+            raise LLMResponseError(f"LLM 响应格式错误: {e}", self.provider_name, data)
 
     async def chat_stream(self, messages: list[dict], temperature: float = 0.1) -> AsyncGenerator[str, None]:
         client = await self._get_client()
@@ -48,7 +58,11 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             "stream": True,
         }
         async with client.stream("POST", url, json=payload) as response:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                raise LLMConnectionError(f"LLM 流式请求失败: {e.response.status_code}", self.provider_name)
+
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     data_str = line[6:]
@@ -65,7 +79,7 @@ class OpenAICompatibleProvider(BaseLLMProvider):
                         continue
 
     async def test_connection(self) -> dict:
-        """测试 LLM 连接是否正常"""
+        from ..exceptions import format_llm_result
         try:
             client = await self._get_client()
             url = f"{self.base_url}/chat/completions"
@@ -77,11 +91,11 @@ class OpenAICompatibleProvider(BaseLLMProvider):
             }
             response = await client.post(url, json=payload, timeout=30.0)
             if response.status_code == 200:
-                return {"success": True, "message": "LLM 连接测试成功"}
+                return format_llm_result(True, data={"message": "LLM 连接测试成功"})
             else:
-                return {"success": False, "message": f"连接失败: {response.status_code}"}
+                return format_llm_result(False, error=f"连接失败: {response.status_code}", provider=self.provider_name, code="HTTP_ERROR")
         except Exception as e:
-            return {"success": False, "message": f"连接失败: {str(e)}"}
+            return format_llm_result(False, error=f"连接失败: {str(e)}", provider=self.provider_name, code="CONNECTION_ERROR")
 
     async def close(self):
         if self._client:

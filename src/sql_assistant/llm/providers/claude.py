@@ -4,6 +4,8 @@ import httpx
 from typing import AsyncGenerator, Optional
 
 from ..base import BaseLLMProvider
+from ..retry import async_retry
+from ..exceptions import LLMConnectionError, LLMResponseError
 
 
 class ClaudeProvider(BaseLLMProvider):
@@ -43,6 +45,7 @@ class ClaudeProvider(BaseLLMProvider):
 
         return claude_messages, system_content
 
+    @async_retry(max_attempts=3, base_delay=1.0, retryable_exceptions=(httpx.HTTPError,))
     async def chat(self, messages: list[dict], temperature: float = 0.1) -> str:
         client = await self._get_client()
         claude_messages, system = self._convert_messages(messages)
@@ -58,9 +61,16 @@ class ClaudeProvider(BaseLLMProvider):
             payload["system"] = system
 
         response = await client.post(url, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise LLMConnectionError(f"Claude 请求失败: {e.response.status_code} - {e.response.text}", "claude")
+
         data = response.json()
-        return data["content"][0]["text"]
+        try:
+            return data["content"][0]["text"]
+        except (KeyError, IndexError) as e:
+            raise LLMResponseError(f"Claude 响应格式错误: {e}", "claude", data)
 
     async def chat_stream(self, messages: list[dict], temperature: float = 0.1) -> AsyncGenerator[str, None]:
         client = await self._get_client()
@@ -78,7 +88,11 @@ class ClaudeProvider(BaseLLMProvider):
             payload["system"] = system
 
         async with client.stream("POST", url, json=payload) as response:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                raise LLMConnectionError(f"Claude 流式请求失败: {e.response.status_code}", "claude")
+
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     data_str = line[6:]
@@ -94,7 +108,7 @@ class ClaudeProvider(BaseLLMProvider):
                         continue
 
     async def test_connection(self) -> dict:
-        """测试 Claude 连接是否正常"""
+        from ..exceptions import format_llm_result
         try:
             client = await self._get_client()
             url = "https://api.anthropic.com/v1/messages"
@@ -106,11 +120,11 @@ class ClaudeProvider(BaseLLMProvider):
             }
             response = await client.post(url, json=payload, timeout=30.0)
             if response.status_code == 200:
-                return {"success": True, "message": "Claude 连接测试成功"}
+                return format_llm_result(True, data={"message": "Claude 连接测试成功"})
             else:
-                return {"success": False, "message": f"连接失败: {response.status_code}"}
+                return format_llm_result(False, error=f"连接失败: {response.status_code}", provider="claude", code="HTTP_ERROR")
         except Exception as e:
-            return {"success": False, "message": f"连接失败: {str(e)}"}
+            return format_llm_result(False, error=f"连接失败: {str(e)}", provider="claude", code="CONNECTION_ERROR")
 
     async def close(self):
         if self._client:

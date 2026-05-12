@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
+from .exceptions import format_connector_result
+
 
 @dataclass
 class QueryResult:

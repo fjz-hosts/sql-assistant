@@ -138,17 +138,14 @@ class DatabaseManager:
         """测试当前激活的连接"""
         config = get_config_manager().get_active_database()
         if not config:
-            return {"success": False, "message": "未配置数据库连接"}
+            return {"success": False, "error": "未配置数据库连接"}
 
         connector = self._create_connector(config)
         try:
-            ok = await connector.test_connection()
-            return {
-                "success": ok,
-                "message": "连接成功" if ok else "连接失败",
-            }
+            result = await connector.test_connection()
+            return result
         except Exception as e:
-            return {"success": False, "message": str(e)}
+            return {"success": False, "error": str(e), "code": "CONNECTION_FAILED"}
         finally:
             await connector.disconnect()
 
@@ -156,13 +153,10 @@ class DatabaseManager:
         """测试指定配置的连接"""
         connector = self._create_connector(config)
         try:
-            ok = await connector.test_connection()
-            return {
-                "success": ok,
-                "message": "连接成功" if ok else "连接失败",
-            }
+            result = await connector.test_connection()
+            return result
         except Exception as e:
-            return {"success": False, "message": str(e)}
+            return {"success": False, "error": str(e), "code": "CONNECTION_FAILED"}
         finally:
             await connector.disconnect()
 

@@ -104,6 +104,22 @@ async def execute_query(request: QueryRequest):
         result = await db.execute(sql_text)
         result_dict = _result_to_dict(result)
 
+        total_rows = result_dict.get("row_count", 0)
+        total_pages = (total_rows + request.page_size - 1) // request.page_size if total_rows > 0 else 1
+
+        if total_rows > 0 and request.page > 1:
+            start_idx = (request.page - 1) * request.page_size
+            end_idx = start_idx + request.page_size
+            result_dict["rows"] = result_dict["rows"][start_idx:end_idx]
+            result_dict["row_count"] = len(result_dict["rows"])
+
+        pagination = {
+            "page": request.page,
+            "page_size": request.page_size,
+            "total_rows": total_rows,
+            "total_pages": total_pages,
+        }
+
         history_id = await history.add_record(
             question=request.question,
             sql=sql_text,
@@ -121,6 +137,7 @@ async def execute_query(request: QueryRequest):
             result=result_dict,
             history_id=history_id,
             conversation_id=request.conversation_id,
+            pagination=pagination,
         )
     except Exception as e:
         history_id = await history.add_record(

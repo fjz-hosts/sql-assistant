@@ -36,16 +36,21 @@ class RedisConnector(BaseConnector):
             self._conn = None
 
     async def get_schema(self) -> dict:
-        """Redis 无传统 schema，返回 key 列表作为参考"""
+        """Redis 无传统 schema，使用 SCAN 返回 key 列表（避免 KEYS 命令阻塞）"""
         if not self._conn:
             raise RuntimeError("Redis 未连接")
 
         try:
-            keys = await self._conn.keys("*")
-            # 只取前 50 个 key
-            sample = keys[:50]
+            all_keys = []
+            async for k in self._conn.scan_iter(match="*", count=50):
+                all_keys.append(k)
+                if len(all_keys) >= 50:
+                    break
+
+            key_count = len(all_keys)
+            keys = sorted(all_keys)
             types = {}
-            for k in sample:
+            for k in keys:
                 try:
                     t = await self._conn.type(k)
                     types[k] = t
@@ -56,9 +61,9 @@ class RedisConnector(BaseConnector):
                 "db_type": "redis",
                 "keys": [
                     {"name": k, "type": types.get(k, "unknown")}
-                    for k in sorted(sample)
+                    for k in keys
                 ],
-                "key_count": len(keys),
+                "key_count": key_count,
             }
         except Exception as e:
             return {"db_type": "redis", "keys": [], "error": str(e)}
@@ -114,13 +119,14 @@ class RedisConnector(BaseConnector):
 
         return result
 
-    async def test_connection(self) -> bool:
+    async def test_connection(self) -> dict:
+        from .exceptions import format_connector_result
         try:
             await self.connect()
             if self._conn:
                 await self._conn.ping()
-            return True
-        except Exception:
-            return False
+            return format_connector_result(True, data={"message": "Redis 连接成功"}, db_type="redis")
+        except Exception as e:
+            return format_connector_result(False, error=str(e), db_type="redis", code="CONNECTION_FAILED")
         finally:
             await self.disconnect()

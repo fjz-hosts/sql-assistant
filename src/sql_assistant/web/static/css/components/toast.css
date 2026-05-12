@@ -1,0 +1,30 @@
+/* === Toast === */
+.toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast {
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--font-sans);
+    animation: slideIn 200ms ease;
+    max-width: 360px;
+    box-shadow: var(--shadow);
+    border: 1px solid;
+}
+
+.toast.success { background: var(--bg-tertiary); border-color: var(--success); color: var(--success); }
+.toast.error { background: var(--bg-tertiary); border-color: var(--danger); color: var(--danger); }
+.toast.info { background: var(--bg-tertiary); border-color: var(--accent); color: var(--accent); }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}

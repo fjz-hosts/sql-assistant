@@ -4,6 +4,8 @@ import httpx
 from typing import AsyncGenerator, Optional
 
 from ..base import BaseLLMProvider
+from ..retry import async_retry
+from ..exceptions import LLMConnectionError, LLMResponseError
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -18,7 +20,7 @@ class GeminiProvider(BaseLLMProvider):
             self._client = httpx.AsyncClient(timeout=httpx.Timeout(60.0))
         return self._client
 
-    def _convert_messages(self, messages: list[dict]) -> list[dict]:
+    def _convert_messages(self, messages: list[dict]) -> tuple[list[dict], Optional[str]]:
         """将 OpenAI 格式消息转为 Gemini 格式"""
         gemini_contents = []
         system_instruction = None
@@ -36,6 +38,7 @@ class GeminiProvider(BaseLLMProvider):
 
         return gemini_contents, system_instruction
 
+    @async_retry(max_attempts=3, base_delay=1.0, retryable_exceptions=(httpx.HTTPError,))
     async def chat(self, messages: list[dict], temperature: float = 0.1) -> str:
         client = await self._get_client()
         contents, system_instruction = self._convert_messages(messages)
@@ -53,9 +56,16 @@ class GeminiProvider(BaseLLMProvider):
             }
 
         response = await client.post(url, params=params, json=payload)
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise LLMConnectionError(f"Gemini 请求失败: {e.response.status_code} - {e.response.text}", "gemini")
+
         data = response.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        try:
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError) as e:
+            raise LLMResponseError(f"Gemini 响应格式错误: {e}", "gemini", data)
 
     async def chat_stream(self, messages: list[dict], temperature: float = 0.1) -> AsyncGenerator[str, None]:
         client = await self._get_client()
@@ -74,7 +84,11 @@ class GeminiProvider(BaseLLMProvider):
             }
 
         async with client.stream("POST", url, params=params, json=payload) as response:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                raise LLMConnectionError(f"Gemini 流式请求失败: {e.response.status_code}", "gemini")
+
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     data_str = line[6:]
@@ -90,7 +104,7 @@ class GeminiProvider(BaseLLMProvider):
                         continue
 
     async def test_connection(self) -> dict:
-        """测试 Gemini 连接是否正常"""
+        from ..exceptions import format_llm_result
         try:
             client = await self._get_client()
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
@@ -101,11 +115,11 @@ class GeminiProvider(BaseLLMProvider):
             }
             response = await client.post(url, params=params, json=payload, timeout=30.0)
             if response.status_code == 200:
-                return {"success": True, "message": "Gemini 连接测试成功"}
+                return format_llm_result(True, data={"message": "Gemini 连接测试成功"})
             else:
-                return {"success": False, "message": f"连接失败: {response.status_code}"}
+                return format_llm_result(False, error=f"连接失败: {response.status_code}", provider="gemini", code="HTTP_ERROR")
         except Exception as e:
-            return {"success": False, "message": f"连接失败: {str(e)}"}
+            return format_llm_result(False, error=f"连接失败: {str(e)}", provider="gemini", code="CONNECTION_ERROR")
 
     async def close(self):
         if self._client:

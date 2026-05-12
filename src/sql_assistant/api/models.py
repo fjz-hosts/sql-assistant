@@ -10,6 +10,8 @@ class QueryRequest(BaseModel):
     question: str = Field(description="自然语言查询问题")
     db_type_override: Optional[str] = Field(default=None, description="临时切换数据库类型")
     conversation_id: Optional[int] = Field(default=None, description="对话ID，用于在已有对话中添加消息")
+    page: int = Field(default=1, ge=1, description="结果页码")
+    page_size: int = Field(default=100, ge=1, le=1000, description="每页记录数")
 
 
 class QueryResponse(BaseModel):
@@ -20,6 +22,7 @@ class QueryResponse(BaseModel):
     error: Optional[str] = None
     history_id: Optional[int] = None
     conversation_id: Optional[int] = None
+    pagination: Optional[dict] = None
 
 
 # ---- Conversation ----

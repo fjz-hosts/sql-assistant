@@ -118,15 +118,16 @@ class PostgreSQLConnector(BaseConnector):
 
         return await loop.run_in_executor(None, _run)
 
-    async def test_connection(self) -> bool:
+    async def test_connection(self) -> dict:
+        from .exceptions import format_connector_result
         try:
             await self.connect()
             if self._conn:
                 cur = self._conn.cursor()
                 cur.execute("SELECT 1")
                 cur.close()
-            return True
-        except Exception:
-            return False
+            return format_connector_result(True, data={"message": "PostgreSQL 连接成功"}, db_type="postgresql")
+        except Exception as e:
+            return format_connector_result(False, error=str(e), db_type="postgresql", code="CONNECTION_FAILED")
         finally:
             await self.disconnect()
