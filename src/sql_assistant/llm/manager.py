@@ -18,27 +18,26 @@ class LLMManager:
 
     def _create_provider(self, config: LLMProviderConfig) -> BaseLLMProvider:
         """根据配置创建对应的 Provider 实例"""
-        if config.is_openai_compatible():
-            return OpenAICompatibleProvider(
-                api_key=config.api_key,
-                base_url=config.get_base_url(),
-                model=config.get_model(),
-                provider_name=config.provider,
-            )
-        elif config.provider == "gemini":
+        if config.provider == "gemini":
             return GeminiProvider(
                 api_key=config.api_key,
                 base_url=config.get_base_url(),
                 model=config.get_model(),
             )
-        elif config.provider == "claude":
+        elif config.provider == "claude" or config.provider == "minimax":
             return ClaudeProvider(
                 api_key=config.api_key,
                 base_url=config.get_base_url(),
                 model=config.get_model(),
             )
         else:
-            raise ValueError(f"不支持的 Provider: {config.provider}")
+            # OpenAI 兼容接口
+            return OpenAICompatibleProvider(
+                api_key=config.api_key,
+                base_url=config.get_base_url(),
+                model=config.get_model(),
+                provider_name=config.provider,
+            )
 
     def get_provider(self, config: LLMProviderConfig) -> BaseLLMProvider:
         """获取或创建 Provider (带缓存)"""

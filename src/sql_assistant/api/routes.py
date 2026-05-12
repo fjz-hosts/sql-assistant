@@ -280,6 +280,20 @@ async def delete_conversation(conversation_id: int):
     return {"ok": True}
 
 
+# ---- Config: LLM Models ----
+
+@router.get("/config/llm/models")
+async def get_llm_models(provider: Optional[str] = None):
+    """获取 LLM 提供商支持的模型列表"""
+    from ..settings import PROVIDER_MODELS
+    
+    if provider:
+        models = PROVIDER_MODELS.get(provider, [])
+        return {"provider": provider, "models": models}
+    
+    return {"models": PROVIDER_MODELS}
+
+
 # ---- Config: LLM ----
 
 @router.get("/config/llm", response_model=list[LLMConfigResponse])

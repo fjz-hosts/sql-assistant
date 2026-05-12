@@ -78,6 +78,7 @@ const state = {
     tableCount: 0,
     currentConversationId: null,
     conversations: [],
+    llmModels: {}, // 存储各提供商的模型列表
 };
 
 // ============================================================
@@ -458,11 +459,16 @@ function closeSettings() { dom.settingsModal.classList.remove('active'); }
 
 async function loadSettings() {
     try {
-        const settings = await API.get('/api/config/settings');
+        const [settings, models] = await Promise.all([
+            API.get('/api/config/settings'),
+            API.get('/api/config/llm/models')
+        ]);
+        
         state.llmConfigs = settings.llm_providers;
         state.dbConfigs = settings.databases;
         state.activeLLM = settings.active_llm;
         state.activeDB = settings.active_database;
+        state.llmModels = models.models || {};
 
         renderLLMConfigs();
         renderDBConfigs();
@@ -470,6 +476,86 @@ async function loadSettings() {
     } catch (err) {
         showToast('加载设置失败', 'error');
     }
+}
+
+async function loadLLMModels(provider) {
+    try {
+        const result = await API.get(`/api/config/llm/models?provider=${encodeURIComponent(provider)}`);
+        state.llmModels[provider] = result.models || [];
+        return result.models || [];
+    } catch (err) {
+        console.error('加载模型列表失败:', err);
+        return [];
+    }
+}
+
+function updateModelSelect(provider) {
+    const select = $('llm-model');
+    select.innerHTML = '<option value="">选择模型...</option>';
+    
+    const models = state.llmModels[provider] || [];
+    if (models.length === 0) {
+        return;
+    }
+    
+    for (const model of models) {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        select.appendChild(option);
+    }
+    
+    const defaultModel = getDefaultModel(provider);
+    if (defaultModel) {
+        select.value = defaultModel;
+    }
+}
+
+function getDefaultModel(provider) {
+    const defaults = {
+        deepseek: 'deepseek-v4-pro',
+        doubao: 'doubao-seed-2-0-pro-260215',
+        kimi: 'kimi-k2.6',
+        qwen: 'qwen3.6-max-preview',
+        openai: 'gpt-5.5',
+        gemini: 'gemini-3.1-pro-preview',
+        claude: 'claude-opus-4-7',
+        glm: 'glm-5.1',
+        minimax: 'MiniMax-M2.7',
+        siliconflow: 'deepseek-ai/DeepSeek-V3.2',
+        openrouter: 'deepseek/deepseek-v4-pro',
+        grok: 'grok-4.20-reasoning',
+        tencent: 'hy3-preview',
+        mimo: 'mimo-v2.5-pro',
+        ollama: 'llama3.3',
+    };
+    return defaults[provider] || '';
+}
+
+function updateLLMFormByProvider(provider) {
+    const apiKeyField = document.querySelector('#llm-api-key').closest('.form-group');
+    const baseUrlField = document.querySelector('#llm-base-url').closest('.form-group');
+    
+    const noApiKeyProviders = ['ollama'];
+    const defaultBaseUrlProviders = ['openai', 'deepseek', 'kimi', 'qwen', 'doubao', 'glm', 'grok', 'tencent', 'mimo', 'ollama'];
+    
+    if (noApiKeyProviders.includes(provider)) {
+        apiKeyField.style.display = 'none';
+        $('llm-api-key').value = '';
+    } else {
+        apiKeyField.style.display = 'block';
+    }
+    
+    if (defaultBaseUrlProviders.includes(provider)) {
+        baseUrlField.style.display = 'none';
+        $('llm-base-url').value = '';
+    } else {
+        baseUrlField.style.display = 'block';
+    }
+}
+
+function requiresApiKey(provider) {
+    return !['ollama'].includes(provider);
 }
 
 // LLM Configs
@@ -523,7 +609,11 @@ function editLLM(name) {
     $('llm-api-key').value = '';
     $('llm-api-key').placeholder = '留空保留原 Key';
     $('llm-base-url').value = '';
-    $('llm-model').value = config.model;
+    
+    updateModelSelect(config.provider);
+    $('llm-model').value = config.model || '';
+    updateLLMFormByProvider(config.provider);
+    
     dom.llmForm.style.display = 'block';
     dom.llmForm.scrollIntoView({ behavior: 'smooth' });
 }
@@ -551,16 +641,17 @@ async function testLLM(name) {
 }
 
 async function testNewLLM() {
+    const provider = $('llm-provider').value;
     const data = {
         name: $('llm-name').value.trim() || 'temp_test',
-        provider: $('llm-provider').value,
+        provider: provider,
         api_key: $('llm-api-key').value.trim(),
         base_url: $('llm-base-url').value.trim(),
-        model: $('llm-model').value.trim(),
+        model: $('llm-model').value,
     };
 
-    if (!data.api_key) return showToast('请输入 API Key', 'error');
-    if (!data.model) return showToast('请输入模型名称', 'error');
+    if (requiresApiKey(provider) && !data.api_key) return showToast('请输入 API Key', 'error');
+    if (!data.model) return showToast('请选择模型', 'error');
 
     try {
         showToast('正在测试 LLM 连接...', 'info');
@@ -576,10 +667,11 @@ async function saveLLM() {
     const provider = $('llm-provider').value;
     const apiKey = $('llm-api-key').value.trim();
     const baseUrl = $('llm-base-url').value.trim();
-    const model = $('llm-model').value.trim();
+    const model = $('llm-model').value;
 
     if (!name) return showToast('请输入配置名称', 'error');
-    if (!state.editingLLM && !apiKey) return showToast('请输入 API Key', 'error');
+    if (!state.editingLLM && requiresApiKey(provider) && !apiKey) return showToast('请输入 API Key', 'error');
+    if (!model) return showToast('请选择模型', 'error');
 
     try {
         await API.post('/api/config/llm', { name, provider, api_key: apiKey, base_url: baseUrl, model });
@@ -598,7 +690,13 @@ function cancelLLMForm() {
     $('llm-name').value = '';
     $('llm-api-key').value = '';
     $('llm-base-url').value = '';
-    $('llm-model').value = '';
+    $('llm-model').innerHTML = '<option value="">选择模型...</option>';
+    
+    // 恢复所有字段显示
+    const apiKeyField = document.querySelector('#llm-api-key').closest('.form-group');
+    const baseUrlField = document.querySelector('#llm-base-url').closest('.form-group');
+    apiKeyField.style.display = 'block';
+    baseUrlField.style.display = 'block';
 }
 
 // DB Configs
@@ -822,9 +920,26 @@ document.addEventListener('DOMContentLoaded', () => {
         state.editingLLM = null;
         $('llm-form-title').textContent = '添加 LLM 提供商';
         $('llm-api-key').placeholder = 'sk-...';
+        $('llm-name').value = '';
+        $('llm-provider').value = 'deepseek';
+        $('llm-api-key').value = '';
+        $('llm-base-url').value = '';
+        updateModelSelect('deepseek');
+        updateLLMFormByProvider('deepseek');
         dom.llmForm.style.display = 'block';
         dom.llmForm.scrollIntoView({ behavior: 'smooth' });
     });
+    
+    // Provider change - update model list and form fields
+    $('llm-provider').addEventListener('change', async (e) => {
+        const provider = e.target.value;
+        if (!state.llmModels[provider] || state.llmModels[provider].length === 0) {
+            await loadLLMModels(provider);
+        }
+        updateModelSelect(provider);
+        updateLLMFormByProvider(provider);
+    });
+
     $('btn-save-llm').addEventListener('click', saveLLM);
     $('btn-cancel-llm').addEventListener('click', cancelLLMForm);
     $('btn-test-llm').addEventListener('click', testNewLLM);

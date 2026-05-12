@@ -122,6 +122,14 @@
                                 <option value="openai">OpenAI</option>
                                 <option value="gemini">Google Gemini</option>
                                 <option value="claude">Anthropic Claude</option>
+                                <option value="glm">智谱 GLM</option>
+                                <option value="minimax">MiniMax</option>
+                                <option value="siliconflow">硅基流动 (SiliconFlow)</option>
+                                <option value="openrouter">OpenRouter</option>
+                                <option value="grok">Grok (xAI)</option>
+                                <option value="tencent">腾讯混元</option>
+                                <option value="mimo">小米 MiMo</option>
+                                <option value="ollama">Ollama (本地)</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -133,8 +141,10 @@
                             <input type="text" id="llm-base-url" placeholder="自动填充默认地址">
                         </div>
                         <div class="form-group">
-                            <label>模型名称（可选，留空使用默认）</label>
-                            <input type="text" id="llm-model" placeholder="自动填充默认模型">
+                            <label>模型名称</label>
+                            <select id="llm-model">
+                                <option value="">选择模型...</option>
+                            </select>
                         </div>
                         <div class="form-actions">
                             <button class="btn-primary" id="btn-save-llm">保存</button>
