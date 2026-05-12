@@ -1,0 +1,116 @@
+# ====================
+# Virtual Environment
+# ====================
+.venv/
+.env/
+env/
+venv/
+
+# ====================
+# Python
+# ====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+uv.lock
+
+# ====================
+# Build Artifacts
+# ====================
+dist/
+build/
+*.whl
+
+# ====================
+# IDE
+# ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ====================
+# OS
+# ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ====================
+# Logs
+# ====================
+*.log
+logs/
+*.log.*
+
+# ====================
+# Configuration
+# ====================
+# 项目数据目录（配置和数据库）
+.data/
+# 旧版配置路径（如存在）
+~/.sql-assistant/
+.sql-assistant/
+
+# ====================
+# Backup
+# ====================
+# 数据库备份目录
+backups/
+
+# ====================
+# Database
+# ====================
+# 注意：.data 目录下的数据库已在上方排除
+# 忽略其他位置的数据库文件
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ====================
+# Trae IDE
+# ====================
+.codegraph/
+${APPDATA}/
+
+# ====================
+# DeepSeek
+# ====================
+.deepseek/
+
+# ====================
+# Node.js (if any)
+# ====================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ====================
+# Testing
+# ====================
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+test-results/
+
+# ====================
+# Security
+# ====================
+*.pem
+*.key
+*.cert
+secrets/
+
+# ====================
+# Misc
+# ====================
+.cache/
+*.egg
+.installed.cfg
