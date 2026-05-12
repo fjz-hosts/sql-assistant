@@ -474,61 +474,87 @@ class BackupManager:
         if not columns or not rows:
             return 0
         
+        # 根据数据库类型选择标识符引用符
+        if db_type == "mysql":
+            quote = "`"
+        elif db_type == "postgresql":
+            quote = '"'
+        elif db_type == "sqlserver":
+            quote = "[]"
+        else:
+            quote = '"'
+        
+        def quote_ident(name: str) -> str:
+            if quote == "[]":
+                return f"[{name}]"
+            return f"{quote}{name}{quote}"
+        
+        quoted_columns = [quote_ident(c) for c in columns]
+        
+        def escape_value(val) -> str:
+            if val is None:
+                return "NULL"
+            if isinstance(val, bool):
+                return "1" if val else "0"
+            if isinstance(val, (int, float)):
+                return str(val)
+            if isinstance(val, (datetime, date)):
+                return f"'{val.isoformat()}'"
+            s = str(val)
+            s = s.replace("'", "''")
+            return f"'{s}'"
+        
+        # 批量插入，每批最多 500 行
+        batch_size = 500
         total_inserted = 0
-        batch_size = 100
-        col_names = ", ".join(columns)
         
         for i in range(0, len(rows), batch_size):
             batch = rows[i:i + batch_size]
-            value_groups = []
-            for row in batch:
-                escaped_values = []
-                for item in row:
-                    if item is None:
-                        escaped_values.append("NULL")
-                    elif isinstance(item, bool):
-                        escaped_values.append("1" if item else "0")
-                    elif isinstance(item, (int, float)):
-                        escaped_values.append(str(item))
-                    elif isinstance(item, str):
-                        escaped_item = item.replace("'", "''")
-                        escaped_values.append(f"'{escaped_item}'")
-                    else:
-                        escaped_item = str(item).replace("'", "''")
-                        escaped_values.append(f"'{escaped_item}'")
-                value_groups.append(f"({', '.join(escaped_values)})")
+            values_clauses = []
             
-            insert_sql = f"INSERT INTO {table_name} ({col_names}) VALUES {', '.join(value_groups)}"
+            for row in batch:
+                converted = self._convert_data_types(row, columns)
+                escaped = [escape_value(v) for v in converted]
+                values_clauses.append(f"({', '.join(escaped)})")
+            
+            insert_sql = f"INSERT INTO {table_name} ({', '.join(quoted_columns)}) VALUES {', '.join(values_clauses)}"
             
             try:
                 await connector.execute(insert_sql)
                 total_inserted += len(batch)
             except Exception:
-                if len(batch) == 1:
-                    continue
+                # 批量插入失败，逐行重试
                 for row in batch:
-                    escaped_values = []
-                    for item in row:
-                        if item is None:
-                            escaped_values.append("NULL")
-                        elif isinstance(item, bool):
-                            escaped_values.append("1" if item else "0")
-                        elif isinstance(item, (int, float)):
-                            escaped_values.append(str(item))
-                        elif isinstance(item, str):
-                            escaped_item = item.replace("'", "''")
-                            escaped_values.append(f"'{escaped_item}'")
-                        else:
-                            escaped_item = str(item).replace("'", "''")
-                            escaped_values.append(f"'{escaped_item}'")
-                    single_sql = f"INSERT INTO {table_name} ({col_names}) VALUES ({', '.join(escaped_values)})"
                     try:
-                        await connector.execute(single_sql)
+                        converted = self._convert_data_types(row, columns)
+                        escaped = [escape_value(v) for v in converted]
+                        insert_sql = f"INSERT INTO {table_name} ({', '.join(quoted_columns)}) VALUES ({', '.join(escaped)})"
+                        await connector.execute(insert_sql)
                         total_inserted += 1
                     except Exception:
                         continue
         
         return total_inserted
+
+    def _convert_data_types(self, row: list, columns: list) -> list:
+        """将 JSON 中的数据转换回合适的 Python 类型"""
+        converted = []
+        for i, item in enumerate(row):
+            if item is None:
+                converted.append(None)
+            elif isinstance(item, str):
+                # 尝试转换 ISO 格式的时间字符串
+                for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%d"]:
+                    try:
+                        converted.append(datetime.strptime(item, fmt))
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    converted.append(item)
+            else:
+                converted.append(item)
+        return converted
 
 
 # 全局单例
