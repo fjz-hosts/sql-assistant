@@ -2,9 +2,6 @@
  * Chat Module
  */
 
-// ============================================================
-// Connection Status
-// ============================================================
 function updateConnectionStatus() {
     const hasLLM = state.activeLLM;
     const hasDB = state.activeDB;
@@ -60,9 +57,6 @@ async function refreshSchema() {
     updateConnectionStatus();
 }
 
-// ============================================================
-// Chat Messages
-// ============================================================
 function addMessage(type, content) {
     const welcome = dom.chatMessages.querySelector('.welcome-message');
     if (welcome) welcome.remove();
@@ -201,24 +195,31 @@ async function sendQuery(question) {
         }
         state.pendingQuestion = question;
 
-        if (state.streamingEnabled) {
-            await sendQueryStream(question, contentDiv);
+        contentDiv.innerHTML = '<div class="streaming-indicator">正在生成 SQL...</div>';
+
+        const previewData = await API.post('/api/query/preview', queryParams);
+
+        if (!previewData.success) {
+            contentDiv.innerHTML = `<div class="error-message">${escapeHtml(previewData.error)}</div>`;
+            return;
+        }
+
+        contentDiv.innerHTML = '';
+
+        contentDiv.appendChild(addSQLBlock(previewData.sql));
+
+        if (previewData.requires_confirmation) {
+            window.pendingSQLData = {
+                question: question,
+                sql: previewData.sql,
+                sqlHash: previewData.sql_hash,
+                conversationId: state.currentConversationId,
+                contentDiv: contentDiv,
+                msgDiv: msgDiv
+            };
+            showSQLConfirmDialog(previewData);
         } else {
-            const data = await API.post('/api/query', queryParams);
-
-            contentDiv.innerHTML = '';
-
-            if (data.sql) {
-                contentDiv.appendChild(addSQLBlock(data.sql));
-            }
-
-            if (data.result) {
-                contentDiv.appendChild(addResultTable(data.result, data.pagination));
-            }
-
-            if (data.error && !data.result) {
-                contentDiv.innerHTML += `<div class="error-message">${escapeHtml(data.error)}</div>`;
-            }
+            await executeConfirmedQuery(queryParams, contentDiv, msgDiv);
         }
     } catch (err) {
         contentDiv.innerHTML = `<div class="error-message">${escapeHtml(err.message)}</div>`;
@@ -228,83 +229,6 @@ async function sendQuery(question) {
     loadConversations();
 }
 
-async function sendQueryStream(question, contentDiv) {
-    contentDiv.innerHTML = '<div class="streaming-indicator">正在生成 SQL...</div>';
-    const sqlBlock = addSQLBlock('');
-    sqlBlock.classList.add('streaming');
-    const sqlCode = sqlBlock.querySelector('code');
-    contentDiv.appendChild(sqlBlock);
-
-    let fullSql = '';
-    let resultShown = false;
-
-    try {
-        const response = await fetch('/api/query/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                question,
-                conversation_id: state.currentConversationId
-            }),
-        });
-
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({ detail: '请求失败' }));
-            throw new Error(err.detail || '流式请求失败');
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-                if (!line.trim() || !line.startsWith('data: ')) continue;
-
-                try {
-                    const data = JSON.parse(line.slice(6));
-
-                    if (data.type === 'llm_chunk') {
-                        fullSql += data.content;
-                        sqlCode.textContent = fullSql;
-                        dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
-                    } else if (data.type === 'sql') {
-                        fullSql = data.content;
-                        sqlCode.textContent = fullSql;
-                    } else if (data.type === 'result') {
-                        if (!resultShown) {
-                            contentDiv.appendChild(addResultTable(data.content));
-                            resultShown = true;
-                        }
-                    } else if (data.type === 'error') {
-                        contentDiv.innerHTML = `<div class="error-message">${escapeHtml(data.content)}</div>`;
-                        return;
-                    } else if (data.type === 'done') {
-                        const indicator = contentDiv.querySelector('.streaming-indicator');
-                        if (indicator) indicator.remove();
-                        sqlBlock.classList.remove('streaming');
-                        if (typeof hljs !== 'undefined') {
-                            hljs.highlightElement(sqlCode);
-                        }
-                    }
-                } catch (e) {
-                    // ignore parse errors for incomplete JSON
-                }
-            }
-        }
-    } catch (err) {
-        contentDiv.innerHTML = `<div class="error-message">${escapeHtml(err.message)}</div>`;
-    }
-}
-
-// Expose functions
 window.updateConnectionStatus = updateConnectionStatus;
 window.refreshSchema = refreshSchema;
 window.addMessage = addMessage;

@@ -130,6 +130,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // SQL 确认对话框
+    $('btn-close-sql-confirm').addEventListener('click', hideSQLConfirmDialog);
+    $('btn-cancel-sql').addEventListener('click', hideSQLConfirmDialog);
+    $('btn-confirm-sql').addEventListener('click', confirmAndExecuteSQL);
+    
+    $('sql-confirm-modal').addEventListener('click', (e) => {
+        if (e.target === $('sql-confirm-modal')) hideSQLConfirmDialog();
+    });
+    
+    $('btn-copy-confirm-sql').addEventListener('click', () => {
+        const code = document.getElementById('sql-confirm-code').textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            showToast('已复制到剪贴板', 'success');
+        });
+    });
+
     // Keyboard shortcut: Escape to close modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && dom.settingsModal.classList.contains('active')) {
@@ -137,6 +153,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.key === 'Escape' && $('restore-modal').classList.contains('active')) {
             closeRestoreModal();
+        }
+        if (e.key === 'Escape' && $('sql-confirm-modal').classList.contains('active')) {
+            hideSQLConfirmDialog();
         }
     });
 });

@@ -12,6 +12,21 @@ class QueryRequest(BaseModel):
     conversation_id: Optional[int] = Field(default=None, description="对话ID，用于在已有对话中添加消息")
     page: int = Field(default=1, ge=1, description="结果页码")
     page_size: int = Field(default=100, ge=1, le=1000, description="每页记录数")
+    confirmed: bool = Field(default=False, description="用户是否已确认执行")
+    sql_hash: Optional[str] = Field(default=None, description="要确认执行的 SQL 哈希，用于验证")
+    sql: Optional[str] = Field(default=None, description="用户确认后要执行的 SQL 语句（confirmed=True 时使用）")
+
+
+class SQLPreviewResponse(BaseModel):
+    """SQL 预览响应"""
+    success: bool
+    sql: str = ""
+    sql_hash: str = ""
+    requires_confirmation: bool = False
+    confirmation_reason: str = ""
+    warning: str = ""
+    risk_level: str = "none"
+    error: Optional[str] = None
 
 
 class QueryResponse(BaseModel):

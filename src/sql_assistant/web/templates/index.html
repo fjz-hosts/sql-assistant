@@ -331,11 +331,39 @@
         </div>
     </div>
 
+    <!-- SQL 确认模态框 -->
+    <div class="modal-overlay" id="sql-confirm-modal">
+        <div class="modal-container" style="width: 640px;">
+            <div class="modal-header">
+                <h2 id="sql-confirm-title">⚠️ 确认执行 SQL</h2>
+                <button class="btn-icon" id="btn-close-sql-confirm">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="sql-confirm-warning" class="sql-warning-box" style="display: none;"></div>
+                <div id="sql-confirm-reason" class="sql-reason-box"></div>
+                <div class="sql-preview-box">
+                    <div class="sql-preview-header">
+                        <span>📋 SQL 语句</span>
+                        <button class="btn-copy" id="btn-copy-confirm-sql">复制</button>
+                    </div>
+                    <pre><code id="sql-confirm-code" class="language-sql"></code></pre>
+                </div>
+                <div class="sql-confirm-actions" style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn-text" id="btn-cancel-sql">取消</button>
+                    <button class="btn-primary danger" id="btn-confirm-sql">确认执行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/theme-manager.js"></script>
     <script src="/static/js/color-theme-manager.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/ui.js"></script>
     <script src="/static/js/state.js"></script>
+    <script src="/static/js/confirm.js"></script>
     <script src="/static/js/chat.js"></script>
     <script src="/static/js/conversations.js"></script>
     <script src="/static/js/settings.js"></script>
