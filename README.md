@@ -23,7 +23,7 @@
 
 ## 🗞️ News
 
-- **2026-05-14** — 🎉 SQL Smart Assistant v1.0.1 released!
+- **2026-05-14** — 🎉 SQL Smart Assistant v1.0.2 released!
   - Added SQL Template/Favorite functionality
   - Added Execution Plan Analysis feature
 - **2026-05-10** — 🎉 SQL Smart Assistant v1.0.0 released!
