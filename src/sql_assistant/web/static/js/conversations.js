@@ -41,7 +41,7 @@ function renderConversations() {
             </div>
             <div class="meta">
                 <span>${c.message_count || 0} 条消息</span>
-                <span>${c.updated_at?.split('T')[0] || ''}</span>
+                <span>${c.updated_at?.split(' ')[0] || ''}</span>
             </div>
         </div>
     `).join('');

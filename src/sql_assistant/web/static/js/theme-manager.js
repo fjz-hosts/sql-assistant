@@ -54,6 +54,8 @@ const ThemeManager = {
 
     applyTheme() {
         document.documentElement.setAttribute('data-theme', this.currentTheme);
+        // 触发主题变更事件，让其他模块可以响应
+        document.dispatchEvent(new Event('themeChanged'));
     },
 
     getCurrentTheme() {

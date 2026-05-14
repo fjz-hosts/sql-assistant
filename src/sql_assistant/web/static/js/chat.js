@@ -75,7 +75,10 @@ function addSQLBlock(sql) {
     block.innerHTML = `
         <div class="sql-block-header">
             <span>📋 SQL</span>
-            <button class="btn-copy" onclick="copySQL(this)">复制</button>
+            <div class="sql-block-actions">
+                <button class="btn-copy" onclick="copySQL(this)">复制</button>
+                <button class="btn-analyze" onclick="analyzeSQLFromChat(this)">分析</button>
+            </div>
         </div>
         <pre><code class="language-sql">${escapeHtml(sql)}</code></pre>
     `;
@@ -88,6 +91,8 @@ function addSQLBlock(sql) {
 
 function addResultTable(result, pagination) {
     const wrapper = document.createElement('div');
+    wrapper.className = 'result-wrapper';
+    
     if (!result || result.error) {
         wrapper.innerHTML = `<div class="error-message">${escapeHtml(result?.error || '执行失败')}</div>`;
         return wrapper;
@@ -109,7 +114,11 @@ function addResultTable(result, pagination) {
         return wrapper;
     }
 
-    let html = '<div class="result-table-wrapper"><table class="result-table">';
+    // 存储结果数据供导出使用
+    wrapper.dataset.resultData = JSON.stringify({ columns, rows });
+
+    let html = '<div class="result-header"><span class="result-title">📊 查询结果</span><button class="btn-export" onclick="showExportMenu(this)">导出</button></div>';
+    html += '<div class="result-table-wrapper"><table class="result-table">';
     html += '<thead><tr>';
     for (const col of columns) {
         html += `<th>${escapeHtml(String(col))}</th>`;
@@ -146,6 +155,21 @@ function addResultTable(result, pagination) {
     wrapper.innerHTML = html;
     wrapper.dataset.pagination = JSON.stringify(pagination || {});
     return wrapper;
+}
+
+function showExportMenu(btn) {
+    const resultWrapper = btn.closest('.result-wrapper');
+    if (!resultWrapper) return;
+    
+    try {
+        const data = JSON.parse(resultWrapper.dataset.resultData);
+        if (data.columns && data.rows) {
+            ExportManager.showExportMenu(btn, data.columns, data.rows);
+        }
+    } catch (e) {
+        console.error('导出数据解析失败:', e);
+        showToast('导出数据解析失败', 'error');
+    }
 }
 
 function changePage(delta) {
@@ -236,3 +260,4 @@ window.addSQLBlock = addSQLBlock;
 window.addResultTable = addResultTable;
 window.changePage = changePage;
 window.sendQuery = sendQuery;
+window.showExportMenu = showExportMenu;

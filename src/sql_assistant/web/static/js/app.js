@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     ThemeManager.init();
     ColorThemeManager.init();
 
+    // 初始化导航栏
+    NavbarManager.init();
+
     // 加载流式响应设置
     state.streamingEnabled = false;
 
@@ -145,6 +148,15 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('已复制到剪贴板', 'success');
         });
     });
+
+    // Template panel
+    $('btn-templates').addEventListener('click', () => templateManager.showPanel());
+
+    // Explain panel
+    $('btn-explain').addEventListener('click', () => explainManager.showPanel());
+
+    // Initialize explain manager
+    explainManager.init();
 
     // Keyboard shortcut: Escape to close modal
     document.addEventListener('keydown', (e) => {

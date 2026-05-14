@@ -1,0 +1,183 @@
+/* === Navigation Bar === */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navbar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 12px;
+}
+
+.navbar-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    position: relative;
+}
+
+.navbar-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.navbar-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.navbar-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Color Picker Dropdown */
+.color-picker-container {
+    position: relative;
+}
+
+.color-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    display: none;
+    min-width: 200px;
+}
+
+.color-picker-dropdown.active {
+    display: block;
+}
+
+.color-picker-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.color-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+}
+
+.color-btn:hover {
+    transform: scale(1.1);
+}
+
+.color-btn.active {
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+}
+
+.color-btn[data-color="blue"] { background: #58a6ff; }
+.color-btn[data-color="purple"] { background: #a371f7; }
+.color-btn[data-color="pink"] { background: #f778ba; }
+.color-btn[data-color="red"] { background: #f85149; }
+.color-btn[data-color="orange"] { background: #d29922; }
+.color-btn[data-color="yellow"] { background: #d4a72c; }
+.color-btn[data-color="green"] { background: #3fb950; }
+.color-btn[data-color="cyan"] { background: #39c5cf; }
+
+.color-btn::after {
+    content: attr(title);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+}
+
+.color-btn:hover::after {
+    opacity: 1;
+}
+
+/* Theme Toggle */
+.theme-toggle-btn {
+    position: relative;
+}
+
+.theme-toggle-btn .tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+}
+
+.theme-toggle-btn:hover .tooltip {
+    opacity: 1;
+}
+
+/* 分隔线 */
+.navbar-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border-color);
+    margin: 0 8px;
+}

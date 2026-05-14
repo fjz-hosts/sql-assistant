@@ -78,10 +78,12 @@ class HistoryManager:
         if not title:
             title = "未命名对话"
         
+        local_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
         cursor = await db.execute(
             """INSERT INTO conversations (title, created_at, updated_at)
-               VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""",
-            (title,),
+               VALUES (?, ?, ?)""",
+            (title, local_time, local_time),
         )
         await db.commit()
         return cursor.lastrowid
@@ -120,10 +122,11 @@ class HistoryManager:
     async def update_conversation(self, conversation_id: int, title: str) -> bool:
         """更新对话标题"""
         db = await self._get_db()
+        local_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor = await db.execute(
-            """UPDATE conversations SET title = ?, updated_at = CURRENT_TIMESTAMP
+            """UPDATE conversations SET title = ?, updated_at = ?
                WHERE id = ?""",
-            (title, conversation_id),
+            (title, local_time, conversation_id),
         )
         await db.commit()
         return cursor.rowcount > 0
@@ -168,20 +171,22 @@ class HistoryManager:
         """添加一条查询记录，返回记录 ID"""
         db = await self._get_db()
         result_json = json.dumps(result, ensure_ascii=False, default=str) if result else None
+        
+        local_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         cursor = await db.execute(
             """INSERT INTO query_history
-               (conversation_id, question, sql, result_json, db_type, llm_provider, success, error_message)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (conversation_id, question, sql, result_json, db_type, llm_provider, int(success), error_message),
+               (conversation_id, question, sql, result_json, db_type, llm_provider, success, error_message, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (conversation_id, question, sql, result_json, db_type, llm_provider, int(success), error_message, local_time),
         )
         await db.commit()
         
         # 如果关联了对话，更新对话的 updated_at
         if conversation_id:
             await db.execute(
-                "UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-                (conversation_id,),
+                "UPDATE conversations SET updated_at = ? WHERE id = ?",
+                (local_time, conversation_id),
             )
             await db.commit()
         

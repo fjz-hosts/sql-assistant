@@ -47,7 +47,16 @@ function copySQL(btn) {
     }
 }
 
+function analyzeSQLFromChat(btn) {
+    const sql = btn.closest('.sql-block')?.querySelector('code')?.textContent;
+    if (sql) {
+        explainManager.showPanel();
+        explainManager.analyzeSQL(sql.trim());
+    }
+}
+
 // Expose functions
 window.showToast = showToast;
 window.escapeHtml = escapeHtml;
 window.copySQL = copySQL;
+window.analyzeSQLFromChat = analyzeSQLFromChat;

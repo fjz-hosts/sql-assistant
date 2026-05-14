@@ -3,8 +3,11 @@
 
 @import url('base.css');
 @import url('components/sidebar.css');
+@import url('components/navbar.css');
 @import url('components/chat.css');
 @import url('components/modal.css');
 @import url('components/settings.css');
 @import url('components/backup.css');
 @import url('components/toast.css');
+@import url('components/templates.css');
+@import url('components/explain.css');

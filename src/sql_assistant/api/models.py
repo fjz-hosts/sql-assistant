@@ -219,3 +219,120 @@ class RestoreResponse(BaseModel):
     backup_id: str = ""
     tables_restored: List[str] = Field(default_factory=list)
     total_records: int = 0
+
+
+# ---- Templates ----
+
+class TemplateRequest(BaseModel):
+    """模板请求模型"""
+    name: str = Field(description="模板名称")
+    description: Optional[str] = Field(default="", description="模板描述")
+    sql: str = Field(description="SQL模板内容")
+    tags: Optional[List[str]] = Field(default_factory=list, description="标签列表")
+
+class TemplateResponse(BaseModel):
+    """模板响应模型"""
+    id: int
+    name: str
+    description: str = ""
+    sql: str
+    tags: List[str] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+
+class TemplateListResponse(BaseModel):
+    """模板列表响应模型"""
+    templates: List[TemplateResponse]
+    total: int
+
+
+# ---- Export ----
+
+class ExportRequest(BaseModel):
+    """导出请求模型"""
+    columns: List[str] = Field(description="列名列表")
+    rows: List[List[Any]] = Field(description="数据行列表")
+    format: str = Field(default="csv", description="导出格式: csv / json / excel")
+
+class ExportResponse(BaseModel):
+    """导出响应模型"""
+    success: bool
+    format: str = ""
+    content: str = ""
+    content_type: str = ""
+    filename: str = ""
+    row_count: int = 0
+    error: Optional[str] = None
+
+
+# ---- Explain Plan ----
+
+class ExplainRequest(BaseModel):
+    """执行计划分析请求模型"""
+    sql: str = Field(description="要分析的SQL语句")
+    analyze: bool = Field(default=True, description="是否执行ANALYZE获取实际执行时间")
+
+
+class ExplainPlanNode(BaseModel):
+    """执行计划节点"""
+    id: int = Field(default=0, description="节点ID")
+    parent_id: Optional[int] = Field(default=None, description="父节点ID")
+    node_type: str = Field(default="", description="节点类型")
+    table_name: Optional[str] = Field(default=None, description="表名")
+    access_type: Optional[str] = Field(default=None, description="访问类型")
+    key: Optional[str] = Field(default=None, description="使用的索引")
+    rows: Optional[int] = Field(default=None, description="估计扫描行数")
+    cost: Optional[float] = Field(default=None, description="估计成本")
+    actual_time: Optional[float] = Field(default=None, description="实际执行时间(ms)")
+    actual_rows: Optional[int] = Field(default=None, description="实际返回行数")
+    extra: Optional[str] = Field(default=None, description="额外信息")
+    children: List["ExplainPlanNode"] = Field(default_factory=list, description="子节点")
+
+
+class ExplainResponse(BaseModel):
+    """执行计划分析响应模型"""
+    success: bool
+    plan_id: Optional[int] = Field(default=None, description="保存的计划ID")
+    sql: str = ""
+    db_type: str = ""
+    db_name: str = ""
+    plan_tree: Optional[ExplainPlanNode] = Field(default=None, description="执行计划树")
+    plan_text: str = ""
+    estimated_cost: float = 0.0
+    estimated_rows: int = 0
+    actual_time_ms: float = 0.0
+    warnings: List[str] = Field(default_factory=list, description="警告信息")
+    suggestions: List[str] = Field(default_factory=list, description="优化建议")
+    is_slow_query: bool = False
+    error: Optional[str] = None
+
+
+class ExplainHistoryRecord(BaseModel):
+    """执行计划历史记录"""
+    id: int
+    sql: str
+    db_type: str
+    db_name: str
+    estimated_cost: float
+    estimated_rows: int
+    actual_time_ms: float
+    warnings: List[str]
+    suggestions: List[str]
+    is_slow_query: bool
+    created_at: str
+
+
+class ExplainHistoryListResponse(BaseModel):
+    """执行计划历史列表响应"""
+    records: List[ExplainHistoryRecord]
+    total: int
+    limit: int
+    offset: int
+
+
+class ExplainStatsResponse(BaseModel):
+    """执行计划统计响应"""
+    total_plans: int
+    slow_query_count: int
+    average_cost: float
+    max_cost: float

@@ -8,6 +8,9 @@ from .conversation import router as conversation_router
 from .backup import router as backup_router
 from .schema import router as schema_router
 from .history import router as history_router
+from .export import router as export_router
+from .templates import router as templates_router
+from .explain import router as explain_router
 
 router = APIRouter(prefix="/api")
 
@@ -17,3 +20,6 @@ router.include_router(conversation_router)
 router.include_router(backup_router)
 router.include_router(schema_router)
 router.include_router(history_router)
+router.include_router(export_router)
+router.include_router(templates_router)
+router.include_router(explain_router)

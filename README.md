@@ -23,6 +23,9 @@
 
 ## 🗞️ News
 
+- **2026-05-14** — 🎉 SQL Smart Assistant v1.0.1 released!
+  - Added SQL Template/Favorite functionality
+  - Added Execution Plan Analysis feature
 - **2026-05-10** — 🎉 SQL Smart Assistant v1.0.0 released!
 
 
@@ -54,7 +57,7 @@ Download and install directly from the Release page:
 
 ```bash
 # Install latest version (replace with your Release URL)
-pip install https://github.com/fjz-hosts/sql-assistant/releases/download/sql-assistant-v1.0.0/sql_assistant-1.0.0-py3-none-any.whl
+pip install sql-assistant
 
 # Install with optional dependencies
 pip install "sql-assistant[sqlserver,gemini,claude]"
@@ -142,6 +145,20 @@ Visit **http://localhost:5010** to start using!
 - **Selective Backup**: Support specifying partial tables for backup, backup all tables by default
 - **Backup Management**: View backup list, get backup details, delete backup files
 - **Data Recovery**: Restore table structure and data from backup files to current database
+
+### 8. SQL Template/Favorite
+
+- **Template Management**: Create, edit, delete SQL templates for frequently used queries
+- **Tag-based Filtering**: Organize templates with tags for easy categorization
+- **Quick Insert**: Insert templates directly into the query input box
+- **Favorite Marking**: Mark frequently used SQL statements as favorites
+
+### 9. Execution Plan Analysis
+
+- **Visual Execution Plan**: View graphical execution plan for SELECT statements
+- **Cost Analysis**: Analyze query cost and performance metrics
+- **Optimization Suggestions**: Get AI-powered optimization recommendations
+- **Index Utilization**: Check index usage and identify missing indexes
 
 
 ## <a id="system-architecture"></a> 🏗️ System Architecture
@@ -418,6 +435,9 @@ Visit **http://localhost:5010/docs** after starting the service to view Swagger 
 | `/api/backup/list` | GET | Get backup list |
 | `/api/backup/{backup_id}` | GET/DELETE | Get backup details / Delete backup |
 | `/api/backup/restore` | POST | Restore database from backup |
+| `/api/templates` | GET/POST | Get template list / Create new template |
+| `/api/templates/{id}` | GET/PUT/DELETE | Get/update/delete template |
+| `/api/explain` | POST | Analyze SQL execution plan |
 
 
 ## ⚠️ Notes
