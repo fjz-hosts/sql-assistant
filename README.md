@@ -228,8 +228,10 @@ SQL Assistant/
 │       ├── users_schema.json     # Table schema file
 │       └── users_data.json       # Table data file
 ├── .data/                        # Data storage directory
-│   ├── config.yaml               # Configuration file (API Key, etc.)
-│   └── history.db                # SQLite database (query history)
+│   ├── config.yaml               # Configuration file (API Key, database connections, etc.)
+│   ├── history.db                # SQLite database (query history)
+│   ├── templates.db              # SQLite database (SQL templates/favorites)
+│   └── explain_history.db        # SQLite database (explain history)
 ├── .venv/                        # uv virtual environment
 └── src/
     └── sql_assistant/
@@ -260,6 +262,7 @@ SQL Assistant/
         │   └── connectors/       # Database connectors
         │       ├── __init__.py
         │       ├── base.py       # Connector abstract base class
+        │       ├── exceptions.py # Database connection exceptions
         │       ├── mysql.py
         │       ├── sqlserver.py
         │       ├── postgresql.py
@@ -289,8 +292,10 @@ Configuration files and data storage have been migrated to the project `.data` d
 ```
 SQL Assistant/
 └── .data/
-    ├── config.yaml               # Configuration file (API Key, etc.)
-    └── history.db                # SQLite database (query history)
+    ├── config.yaml               # Configuration file (API Key, database connections, etc.)
+    ├── history.db                # SQLite database (query history)
+    ├── templates.db              # SQLite database (SQL templates/favorites)
+    └── explain_history.db        # SQLite database (explain history)
 ```
 
 > ⚠️ **Note**: Configuration files stored in `~/.sql-assistant/` from older versions need to be manually migrated to the project `.data` directory.
