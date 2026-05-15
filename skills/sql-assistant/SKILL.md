@@ -8,7 +8,7 @@ description: SQL Smart Assistant - A complete natural language to SQL query tool
 ## Overview
 
 This skill integrates the SQL Assistant FastAPI service directly into the IDE. You can:
-1. Install the SQL Assistant package
+1. Install the SQL Assistant package (asks user for preference)
 2. Start the SQL Assistant service
 3. Configure database connections
 4. Configure LLM providers (OpenAI, Claude, Gemini, etc.)
@@ -20,14 +20,16 @@ This skill integrates the SQL Assistant FastAPI service directly into the IDE. Y
 
 ### Step 1: Install the Package
 
-Choose your preferred installation method:
+**IMPORTANT**: Before installing, ask the user which installation method they prefer:
 
-**Option A: Global Installation**
+> "Do you want to install SQL Assistant globally (for all users) or in a virtual environment (recommended for isolation)?"
+
+**If user chooses Global Installation:**
 ```bash
 pip install sql-assistant
 ```
 
-**Option B: Virtual Environment Installation (Recommended)**
+**If user chooses Virtual Environment Installation (Recommended):**
 ```bash
 # Install uv (Python package manager)
 pip install uv
@@ -48,18 +50,17 @@ source .venv/bin/activate
 
 ### Step 2: Install Optional Dependencies (if needed)
 
+Ask the user if they need support for these optional databases/LLMs:
+
 ```bash
-# Install SQL Server support
+# SQL Server support
 pip install sql-assistant[sqlserver]
 
-# Install Google Gemini support
+# Google Gemini support
 pip install sql-assistant[gemini]
 
-# Install Anthropic Claude support
+# Anthropic Claude support
 pip install sql-assistant[claude]
-
-# Install all optional dependencies at once
-pip install sql-assistant[sqlserver,gemini,claude]
 ```
 
 ### Step 3: Start Service
@@ -70,12 +71,7 @@ python -m sql_assistant.main
 
 # Alternative: With custom host and port
 python -m sql_assistant.main --host 0.0.0.0 --port 5010
-
-# Alternative: Use CLI command (if installed via pip)
-sql-assistant --host 0.0.0.0 --port 5010
 ```
-
-Wait for service to start, then access: http://localhost:5010
 
 ### Step 4: Configure
 
@@ -123,31 +119,19 @@ Example:
 Ask SQL Assistant to: Configure database mysql_dev as mysql with host localhost port 3306 database mydb username admin password secret
 ```
 
-### 4. Execute Raw SQL
+### 4. Preview SQL (without execution)
 
-**Description**: Execute raw SQL statement
-
-**Usage**:
-```
-Ask SQL Assistant to: Execute SQL [sql] on [database]
-
-Example:
-Ask SQL Assistant to: Execute SQL SELECT * FROM users LIMIT 10 on mysql_dev
-```
-
-### 5. Explain SQL
-
-**Description**: Analyze SQL execution plan
+**Description**: Preview generated SQL without executing
 
 **Usage**:
 ```
-Ask SQL Assistant to: Explain SQL [sql] on [database]
+Ask SQL Assistant to: Preview SQL for [question]
 
 Example:
-Ask SQL Assistant to: Explain SQL SELECT COUNT(*) FROM orders WHERE date > '2024-01-01' on mysql_dev
+Ask SQL Assistant to: Preview SQL for Show me all users registered this month
 ```
 
-### 6. Create Backup
+### 5. Create Backup
 
 **Description**: Create database backup
 
@@ -159,7 +143,7 @@ Example:
 Ask SQL Assistant to: Create backup for mysql_dev
 ```
 
-### 7. List Connections
+### 6. List Connections
 
 **Description**: List all configured database connections
 
@@ -168,7 +152,7 @@ Ask SQL Assistant to: Create backup for mysql_dev
 Ask SQL Assistant to: List database connections
 ```
 
-### 8. List LLM Providers
+### 7. List LLM Providers
 
 **Description**: List all configured LLM providers
 
@@ -177,7 +161,7 @@ Ask SQL Assistant to: List database connections
 Ask SQL Assistant to: List LLM providers
 ```
 
-### 9. Set Active Configuration
+### 8. Set Active Configuration
 
 **Description**: Set active LLM or database
 
@@ -191,7 +175,7 @@ Ask SQL Assistant to: Set active LLM to openai
 Ask SQL Assistant to: Set active database to mysql_dev
 ```
 
-### 10. View Query History
+### 9. View Query History
 
 **Description**: View recent query history
 
@@ -200,21 +184,46 @@ Ask SQL Assistant to: Set active database to mysql_dev
 Ask SQL Assistant to: Show query history
 ```
 
-## API Endpoints
+### 10. View Backup List
 
-The skill interacts with the following API endpoints:
+**Description**: View available backups
+
+**Usage**:
+```
+Ask SQL Assistant to: Show backup list
+```
+
+## API Error Auto-Correction
+
+**IMPORTANT**: If any API call fails, the skill should:
+
+1. First check the error message and try to fix common issues
+2. If the error persists, fetch API documentation from http://localhost:5010/openapi.json
+3. Compare the request with the actual API schema
+4. Retry with corrected parameters
+
+Common issues and fixes:
+- Wrong HTTP method → check if should be GET/POST/PUT/DELETE
+- Missing required fields → check API schema for required fields
+- Wrong field names → use exact field names from schema
+- Wrong endpoint path → verify path matches API documentation
+
+## API Endpoints (Auto-called by Skill Scripts)
+
+The skill scripts automatically call these API endpoints:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/query` | POST | Natural language to SQL query |
-| `/api/execute` | POST | Execute raw SQL |
-| `/api/explain` | POST | Explain SQL execution plan |
+| `/api/query/preview` | POST | Preview SQL without executing |
 | `/api/config/llm` | GET/POST | LLM configuration |
+| `/api/config/llm/active/{name}` | PUT | Set active LLM |
 | `/api/config/database` | GET/POST | Database configuration |
-| `/api/config/active` | GET/PUT | Active configuration |
+| `/api/config/database/active/{name}` | PUT | Set active database |
+| `/api/config/settings` | GET | Get all settings |
 | `/api/backup` | POST | Create backup |
+| `/api/backup/list` | GET | List backups |
 | `/api/history` | GET | Query history |
-| `/api/conversations` | GET/POST | Conversation management |
 
 ## Configuration Example
 
@@ -242,19 +251,21 @@ database_connections:
 ## Full Usage Flow
 
 ```
-1. Install: pip install sql-assistant (or use virtual environment)
-2. Start service: python -m sql_assistant.main
-3. Configure LLM: "Configure LLM openai with API key xxx"
-4. Configure database: "Configure database mysql_dev as mysql with host localhost port 3306 database mydb username admin password secret"
-5. Set active: "Set active LLM to openai" and "Set active database to mysql_dev"
-6. Query: "Show me sales data for last 7 days"
+1. Ask user for installation preference (global vs virtualenv)
+2. Install: based on user's choice
+3. Start service: python -m sql_assistant.main
+4. Configure LLM: "Configure LLM openai with API key xxx"
+5. Configure database: "Configure database mysql_dev as mysql with ..."
+6. Set active: "Set active LLM to openai" and "Set active database to mysql_dev"
+7. Query: "Show me sales data for last 7 days"
 ```
 
 ## Resources
 
-- **scripts/install.py**: Interactive installation script
+- **scripts/install.py**: Interactive installation script (asks user for preference)
 - **scripts/start.py**: Service startup script
 - **scripts/configure.py**: Configuration management script
 - **scripts/query.py**: Query execution script
+- **scripts/api_helper.py**: API helper with auto-correction
 - **references/api.md**: Full API documentation
 - **assets/config.yaml**: Configuration template
