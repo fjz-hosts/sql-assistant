@@ -224,7 +224,7 @@ Visit **http://localhost:5010** to start using!
 
 ## <a id="skill-installation"></a> 🧩 Skill Installation
 
-SQL Assistant can also be installed as a skill via the skills registry. This allows users to integrate SQL Assistant into their Agent system with one command.
+SQL Assistant can be installed as a skill via the skills registry. This allows users to integrate SQL Assistant into their Agent system and use all features directly through conversation without opening a web browser.
 
 ### Skill Structure
 
@@ -233,7 +233,10 @@ SQL Assistant/
 └── skills/
     └── sql-assistant/
         ├── SKILL.md           # Skill definition and description
-        ├── scripts/           # Installation and utility scripts
+        ├── scripts/           # Service scripts
+        │   ├── start.py       # Service startup
+        │   ├── configure.py   # Configuration management
+        │   └── query.py       # Query execution
         ├── references/        # API documentation
         └── assets/            # Configuration templates
 ```
@@ -245,13 +248,42 @@ SQL Assistant/
 npx skills add https://github.com/fjz-hosts/sql-assistant --skill sql-assistant
 ```
 
+### Skill Usage Commands
+
+Once the skill is installed and the service is running, you can use these commands through conversation:
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `Configure LLM [provider] with API key [key]` | Configure LLM provider | `Configure LLM openai with API key sk-xxx` |
+| `Configure database [name] as [type] with ...` | Configure database connection | `Configure database mysql_dev as mysql with host localhost port 3306 database mydb username admin password secret` |
+| `Set active LLM to [provider]` | Set active LLM | `Set active LLM to openai` |
+| `Set active database to [name]` | Set active database | `Set active database to mysql_dev` |
+| `Query [question] from [database]` | Natural language query | `Show me total sales for each product from mysql_dev` |
+| `Execute SQL [sql] on [database]` | Execute raw SQL | `Execute SQL SELECT * FROM users LIMIT 10 on mysql_dev` |
+| `Explain SQL [sql] on [database]` | Analyze execution plan | `Explain SQL SELECT COUNT(*) FROM orders on mysql_dev` |
+| `Create backup for [database]` | Create database backup | `Create backup for mysql_dev` |
+| `List database connections` | List all connections | `List database connections` |
+| `List LLM providers` | List all providers | `List LLM providers` |
+| `Show query history` | View recent queries | `Show query history` |
+
 ### Skill Features
 
 - **Natural Language to SQL**: Convert natural language questions into SQL queries
 - **Multi-database Support**: MySQL, PostgreSQL, SQL Server, MongoDB, Redis, SQLite
-- **Multi-LLM Support**: OpenAI, Claude, Gemini and more
-- **Web Interface**: Light/dark theme support with web UI
-- **REST API**: Full API documentation and endpoints
+- **Multi-LLM Support**: OpenAI, Claude, Gemini, DeepSeek, Doubao, Kimi, Qwen
+- **Conversation-based Operation**: Full functionality accessible through chat commands
+- **REST API Integration**: Automatically calls backend APIs for all operations
+
+### Skill Workflow
+
+```
+1. Install skill: npx skills add https://github.com/fjz-hosts/sql-assistant --skill sql-assistant
+2. Start service: sql-assistant
+3. Configure LLM: "Configure LLM openai with API key xxx"
+4. Configure database: "Configure database mysql_dev as mysql with host localhost port 3306 database mydb username admin password secret"
+5. Set active: "Set active LLM to openai" and "Set active database to mysql_dev"
+6. Query: "Show me sales data for last 7 days"
+```
 
 ## <a id="project-structure"></a> 📁 Project Structure
 
