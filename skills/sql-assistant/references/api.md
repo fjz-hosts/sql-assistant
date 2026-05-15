@@ -61,3 +61,101 @@ Chat interface
     "db_connection": "string"
 }
 ```
+
+### GET /api/health
+Get database health overview
+
+**Response:**
+```json
+{
+    "success": true,
+    "db_type": "mysql",
+    "status": "healthy",
+    "connection_ok": true,
+    "response_time_ms": 15.5,
+    "timestamp": "2026-05-15 10:30:00"
+}
+```
+
+### GET /api/health/connection
+Get detailed connection information
+
+**Response:**
+```json
+{
+    "success": true,
+    "db_type": "mysql",
+    "status": "healthy",
+    "connection_ok": true,
+    "response_time_ms": 15.5,
+    "max_connections": 100,
+    "current_connections": 5,
+    "uptime_seconds": 86400,
+    "error_message": ""
+}
+```
+
+### GET /api/health/tables
+Get table statistics
+
+**Response:**
+```json
+{
+    "success": true,
+    "db_type": "mysql",
+    "table_count": 10,
+    "total_size_mb": 256.5,
+    "total_rows": 50000,
+    "tables": [
+        {
+            "name": "users",
+            "engine": "InnoDB",
+            "row_count": 1000,
+            "size_mb": 2.5,
+            "index_length_mb": 0.5,
+            "data_length_mb": 2.0
+        }
+    ]
+}
+```
+
+### GET /api/health/indexes
+Get index statistics
+
+**Response:**
+```json
+{
+    "success": true,
+    "db_type": "mysql",
+    "total_indexes": 25,
+    "table_count": 10,
+    "indexes_by_table": {
+        "users": [
+            {
+                "index_name": "PRIMARY",
+                "column_name": "id",
+                "unique": true,
+                "cardinality": 1000
+            }
+        ]
+    }
+}
+```
+
+### GET /api/health/performance
+Get performance metrics
+
+**Response:**
+```json
+{
+    "success": true,
+    "db_type": "mysql",
+    "status": "healthy",
+    "response_time_ms": 15.5,
+    "slow_queries": 3,
+    "max_connections": 100,
+    "current_connections": 5,
+    "uptime_seconds": 86400,
+    "query_per_second": 125.5
+}
+```

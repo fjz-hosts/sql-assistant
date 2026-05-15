@@ -193,6 +193,22 @@ Ask SQL Assistant to: Show query history
 Ask SQL Assistant to: Show backup list
 ```
 
+### 11. Database Health Check
+
+**Description**: Check database health status, connection info, tables, indexes, and performance metrics
+
+**Usage**:
+```
+Ask SQL Assistant to: Check database health
+Ask SQL Assistant to: Show database connection status
+Ask SQL Assistant to: List database tables
+Ask SQL Assistant to: Show database performance metrics
+
+Example:
+Ask SQL Assistant to: Check database health
+Ask SQL Assistant to: Show me the database health status
+```
+
 ## API Error Auto-Correction
 
 **IMPORTANT**: If any API call fails, the skill should:

@@ -158,6 +158,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize explain manager
     explainManager.init();
 
+    // Health check panel
+    $('btn-health').addEventListener('click', () => healthManager.showPanel());
+
+    // Initialize health manager
+    healthManager.init();
+
     // Keyboard shortcut: Escape to close modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && dom.settingsModal.classList.contains('active')) {

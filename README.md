@@ -23,6 +23,11 @@
 
 ## 🗞️ News
 
+- **2026-05-15** — 🎉 SQL Smart Assistant v1.0.3 released!
+  - Added Database Health Check/Monitoring feature
+  - Connection status monitoring
+  - Table size and index usage statistics
+  - Basic performance metrics
 - **2026-05-14** — 🎉 SQL Smart Assistant v1.0.2 released!
   - Added SQL Template/Favorite functionality
   - Added Execution Plan Analysis feature
@@ -166,6 +171,14 @@ Visit **http://localhost:5010** to start using!
 - **Cost Analysis**: Analyze query cost and performance metrics
 - **Optimization Suggestions**: Get AI-powered optimization recommendations
 - **Index Utilization**: Check index usage and identify missing indexes
+
+### 10. Database Health Check/Monitoring
+
+- **Connection Status Monitoring**: Real-time database connection status and response time
+- **Table Statistics**: View table row count, data size, index size, engine type
+- **Index Usage**: View index name, column, cardinality, uniqueness for each table
+- **Performance Metrics**: Uptime, connection count, slow queries, QPS
+- **Multi-database Support**: MySQL, PostgreSQL, SQL Server, Redis, MongoDB
 
 
 ## <a id="system-architecture"></a> 🏗️ System Architecture
@@ -535,6 +548,18 @@ Community contributions are welcome! Whether it's bug reports, feature suggestio
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+### Documentation Synchronization
+
+When adding new features or rules, **both** of the following must be updated:
+
+1. **README.md**: Update relevant documentation sections
+2. **skills/ directory**: Update corresponding skill files to enable conversation-based access to the new feature
+
+The `skills/sql-assistant/` directory contains:
+- `scripts/`: Python scripts for skill operations
+- `references/`: API documentation references
+- `SKILL.md`: Skill description and usage guide
 
 
 ## 📄 License
