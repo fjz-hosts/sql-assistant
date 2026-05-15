@@ -1,0 +1,21 @@
+# SQL Assistant Configuration Template
+
+llm:
+  provider: openai
+  api_key: YOUR_API_KEY
+  model: gpt-4o-mini
+  temperature: 0.1
+
+databases:
+  - name: mysql_connection
+    type: mysql
+    host: localhost
+    port: 3306
+    database: example_db
+    username: admin
+    password: password
+
+app:
+  host: 0.0.0.0
+  port: 5010
+  debug: false

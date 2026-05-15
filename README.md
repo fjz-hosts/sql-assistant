@@ -77,6 +77,13 @@ uv venv
 uv pip install -e .
 ```
 
+### Option 3: Install as a Skill (via Registry)
+
+```bash
+# Install via npx skills registry
+npx skills add https://github.com/fjz-hosts/sql-assistant --skill sql-assistant
+```
+
 ### Start Server
 
 ```bash
@@ -214,6 +221,37 @@ Visit **http://localhost:5010** to start using!
 | **Redis** | `redis.py` | Redis Command Execution |
 | **MongoDB** | `mongodb.py` | NoSQL Query Operations |
 
+
+## <a id="skill-installation"></a> 🧩 Skill Installation
+
+SQL Assistant can also be installed as a skill via the skills registry. This allows users to integrate SQL Assistant into their Agent system with one command.
+
+### Skill Structure
+
+```
+SQL Assistant/
+└── skills/
+    └── sql-assistant/
+        ├── SKILL.md           # Skill definition and description
+        ├── scripts/           # Installation and utility scripts
+        ├── references/        # API documentation
+        └── assets/            # Configuration templates
+```
+
+### Install as a Skill
+
+```bash
+# Install via npx skills registry
+npx skills add https://github.com/fjz-hosts/sql-assistant --skill sql-assistant
+```
+
+### Skill Features
+
+- **Natural Language to SQL**: Convert natural language questions into SQL queries
+- **Multi-database Support**: MySQL, PostgreSQL, SQL Server, MongoDB, Redis, SQLite
+- **Multi-LLM Support**: OpenAI, Claude, Gemini and more
+- **Web Interface**: Light/dark theme support with web UI
+- **REST API**: Full API documentation and endpoints
 
 ## <a id="project-structure"></a> 📁 Project Structure
 
