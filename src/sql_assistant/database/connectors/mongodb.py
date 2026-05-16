@@ -190,5 +190,3 @@ class MongoDBConnector(BaseConnector):
             return format_connector_result(True, data={"message": "MongoDB 连接成功"}, db_type="mongodb")
         except Exception as e:
             return format_connector_result(False, error=str(e), db_type="mongodb", code="CONNECTION_FAILED")
-        finally:
-            await self.disconnect()

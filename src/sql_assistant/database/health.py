@@ -144,11 +144,11 @@ class DatabaseHealthChecker:
                         ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) as total_mb,
                         AUTO_INCREMENT,
                         AVG_ROW_LENGTH,
-                        CREATE_TIME
+                        CREATE_TIME,
+                        UPDATE_TIME
                     FROM information_schema.TABLES
                     WHERE TABLE_SCHEMA = %s AND TABLE_TYPE = 'BASE TABLE'
                     ORDER BY (DATA_LENGTH + INDEX_LENGTH) DESC
-                    LIMIT 50
                 """, (self.connector.database,))
                 return cursor.fetchall()
 
@@ -165,7 +165,7 @@ class DatabaseHealthChecker:
                 data_length_mb=float(row[3]) if row[3] else 0.0,
                 auto_increment=int(row[6]) if row[6] else None,
                 avg_row_length=int(row[7]) if row[7] else 0,
-                check_time=str(row[8]) if row[8] else None,
+                check_time=str(row[9]) if row[9] else (str(row[8]) if row[8] else None),
             ))
 
         return tables

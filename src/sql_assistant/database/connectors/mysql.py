@@ -106,5 +106,3 @@ class MySQLConnector(BaseConnector):
             return format_connector_result(True, data={"message": "MySQL 连接成功"}, db_type="mysql")
         except Exception as e:
             return format_connector_result(False, error=str(e), db_type="mysql", code="CONNECTION_FAILED")
-        finally:
-            await self.disconnect()

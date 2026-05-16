@@ -23,6 +23,11 @@
 
 ## 🗞️ News
 
+- **2026-05-16** — 🎉 SQL Smart Assistant v1.0.4 released!
+  - Fixed database health check data accuracy issues
+  - Fixed connection status showing 0 (connection lifecycle management bug)
+  - Fixed table count discrepancy (removed LIMIT constraint)
+  - Fixed performance metrics (QPS, slow queries, connections)
 - **2026-05-15** — 🎉 SQL Smart Assistant v1.0.3 released!
   - Added Database Health Check/Monitoring feature
   - Connection status monitoring

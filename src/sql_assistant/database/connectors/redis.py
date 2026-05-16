@@ -128,5 +128,3 @@ class RedisConnector(BaseConnector):
             return format_connector_result(True, data={"message": "Redis 连接成功"}, db_type="redis")
         except Exception as e:
             return format_connector_result(False, error=str(e), db_type="redis", code="CONNECTION_FAILED")
-        finally:
-            await self.disconnect()
