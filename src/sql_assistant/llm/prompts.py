@@ -27,3 +27,8 @@ NL_TO_SQL_PROMPT = """将以下自然语言转换为 {db_type} SQL 语句：
 {question}
 
 只返回 SQL 语句："""
+
+CONTEXT_PROMPT = """用户之前的问题：
+{question}
+
+请结合上下文理解当前问题。"""

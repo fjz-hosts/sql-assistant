@@ -193,29 +193,69 @@ class SQLSecurityGuard:
     def requires_confirmation(self, sql: str) -> Tuple[bool, str]:
         """
         判断 SQL 是否需要用户确认
-        
+
         Args:
             sql: SQL 语句
-            
+
         Returns:
             (是否需要确认, 确认提示信息)
         """
         from .connectors.base import BaseConnector
-        
+
         sql_type = BaseConnector.classify_sql(sql)
-        
+
         # 增删改操作需要确认
-        if sql_type in ["INSERT", "UPDATE", "DELETE", "DDL"]:
+        table_op_types = ["CREATE_TABLE", "DROP_TABLE", "ALTER_TABLE", "TRUNCATE_TABLE"]
+        if sql_type in ["INSERT", "UPDATE", "DELETE"] + table_op_types + ["DDL"]:
             reason_map = {
                 "INSERT": "即将执行 INSERT 操作，会添加新数据",
                 "UPDATE": "即将执行 UPDATE 操作，会修改现有数据",
                 "DELETE": "即将执行 DELETE 操作，会删除数据",
+                "CREATE_TABLE": "即将执行 CREATE TABLE 操作，会创建新表",
+                "DROP_TABLE": "即将执行 DROP TABLE 操作，会删除表",
+                "ALTER_TABLE": "即将执行 ALTER TABLE 操作，会修改表结构",
+                "TRUNCATE_TABLE": "即将执行 TRUNCATE 操作，会清空表数据",
                 "DDL": "即将执行 DDL 操作，会修改数据库结构"
             }
-            return True, reason_map.get(sql_type, "即将执行数据修改操作")
-        
+
+            reason = reason_map.get(sql_type, "即将执行数据修改操作")
+
+            # 对于表操作，提取表名以提供更具体的信息
+            if sql_type in table_op_types:
+                table_name = self._extract_table_name(sql, sql_type)
+                if table_name:
+                    table_specific_map = {
+                        "CREATE_TABLE": f"创建表 '{table_name}'",
+                        "DROP_TABLE": f"删除表 '{table_name}'",
+                        "ALTER_TABLE": f"修改表 '{table_name}' 的结构",
+                        "TRUNCATE_TABLE": f"清空表 '{table_name}' 的所有数据"
+                    }
+                    reason = f"即将执行 {table_specific_map.get(sql_type, '表操作')}，此操作不可逆！"
+
+            return True, reason
+
         # SELECT 不需要确认
         return False, ""
+
+    def _extract_table_name(self, sql: str, sql_type: str) -> str:
+        """从 SQL 语句中提取表名"""
+        import re
+        sql_upper = sql.upper()
+
+        patterns = {
+            "CREATE_TABLE": r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`\"']?(\w+)[`\"']?",
+            "DROP_TABLE": r"DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`\"']?(\w+)[`\"']?",
+            "ALTER_TABLE": r"ALTER\s+TABLE\s+[`\"']?(\w+)[`\"']?",
+            "TRUNCATE_TABLE": r"TRUNCATE\s+(?:TABLE\s+)?[`\"']?(\w+)[`\"']?"
+        }
+
+        pattern = patterns.get(sql_type)
+        if pattern:
+            match = re.search(pattern, sql_upper)
+            if match:
+                return match.group(1)
+
+        return None
 
 
 # 全局单例

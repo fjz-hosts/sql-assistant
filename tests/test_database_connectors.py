@@ -49,6 +49,26 @@ class TestBaseConnector:
         result = BaseConnector.classify_sql("INSERT INTO users (name) VALUES ('test')")
         assert result == "INSERT"
 
+    def test_classify_sql_create_table(self):
+        """测试SQL分类-CREATE_TABLE"""
+        result = BaseConnector.classify_sql("CREATE TABLE users (id INT, name VARCHAR(100))")
+        assert result == "CREATE_TABLE"
+
+    def test_classify_sql_drop_table(self):
+        """测试SQL分类-DROP_TABLE"""
+        result = BaseConnector.classify_sql("DROP TABLE users")
+        assert result == "DROP_TABLE"
+
+    def test_classify_sql_alter_table(self):
+        """测试SQL分类-ALTER_TABLE"""
+        result = BaseConnector.classify_sql("ALTER TABLE users ADD COLUMN email VARCHAR(255)")
+        assert result == "ALTER_TABLE"
+
+    def test_classify_sql_truncate_table(self):
+        """测试SQL分类-TRUNCATE_TABLE"""
+        result = BaseConnector.classify_sql("TRUNCATE TABLE users")
+        assert result == "TRUNCATE_TABLE"
+
 class TestMySQLConnector:
     """MySQL连接器测试"""
     

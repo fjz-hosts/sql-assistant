@@ -69,22 +69,37 @@ class BaseConnector(ABC):
     @staticmethod
     def classify_sql(sql: str) -> str:
         """判断 SQL 语句类型（忽略前导注释和空行）
-        
+
         支持多语句 SQL，检查所有子语句的类型。如果任何子语句是增删改或 DDL，
         则返回该类型，确保危险操作能触发确认对话框。
+
+        返回类型：
+        - SELECT: 查询语句
+        - INSERT: 插入记录
+        - UPDATE: 更新记录
+        - DELETE: 删除记录
+        - CREATE_TABLE: 创建表
+        - DROP_TABLE: 删除表
+        - ALTER_TABLE: 修改表结构
+        - TRUNCATE_TABLE: 清空表
+        - DDL: 其他 DDL 操作
+        - OTHER: 其他语句
         """
         s = BaseConnector._strip_sql_comments(sql).strip()
-        
+
         # 按分号分割 SQL 语句（处理字符串内的分号）
         statements = BaseConnector._split_sql_statements(s)
-        
+
         for stmt in statements:
             stmt_upper = stmt.strip().upper()
             if not stmt_upper:
                 continue
-            
-            # 按优先级判断：DDL > DELETE > UPDATE > INSERT > SELECT
-            if stmt_upper.startswith("CREATE") or stmt_upper.startswith("ALTER") or stmt_upper.startswith("DROP"):
+
+            # 按优先级判断：表操作 > DELETE > UPDATE > INSERT > SELECT
+            if stmt_upper.startswith("CREATE") or stmt_upper.startswith("ALTER") or stmt_upper.startswith("DROP") or stmt_upper.startswith("TRUNCATE"):
+                table_op = BaseConnector._classify_table_operation(stmt_upper)
+                if table_op:
+                    return table_op
                 return "DDL"
             elif stmt_upper.startswith("DELETE"):
                 return "DELETE"
@@ -92,14 +107,27 @@ class BaseConnector(ABC):
                 return "UPDATE"
             elif stmt_upper.startswith("INSERT"):
                 return "INSERT"
-        
+
         # 如果没有找到增删改或 DDL，检查是否是查询语句
         for stmt in statements:
             stmt_upper = stmt.strip().upper()
             if stmt_upper.startswith("SELECT") or stmt_upper.startswith("SHOW") or stmt_upper.startswith("DESCRIBE") or stmt_upper.startswith("EXPLAIN"):
                 return "SELECT"
-        
+
         return "OTHER"
+
+    @staticmethod
+    def _classify_table_operation(stmt_upper: str) -> str:
+        """识别具体的表操作类型"""
+        if "CREATE TABLE" in stmt_upper:
+            return "CREATE_TABLE"
+        elif "DROP TABLE" in stmt_upper:
+            return "DROP_TABLE"
+        elif "ALTER TABLE" in stmt_upper:
+            return "ALTER_TABLE"
+        elif "TRUNCATE" in stmt_upper:
+            return "TRUNCATE_TABLE"
+        return None
     
     @staticmethod
     def _split_sql_statements(sql: str) -> list:

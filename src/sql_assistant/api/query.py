@@ -1,11 +1,12 @@
 """查询相关 API 路由"""
 
 import hashlib
+import json
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from ..llm.prompts import SYSTEM_PROMPT, NL_TO_SQL_PROMPT
+from ..llm.prompts import SYSTEM_PROMPT, NL_TO_SQL_PROMPT, CONTEXT_PROMPT
 from ..database.connectors.base import QueryResult
 from ..database.security import get_security_guard
 
@@ -13,6 +14,9 @@ from .dependencies import get_config, get_llm, get_db, get_history
 from .models import QueryRequest, QueryResponse, SQLPreviewResponse
 
 router = APIRouter()
+
+MAX_CONTEXT_MESSAGES = 10
+"""最大上下文消息数量，防止 prompt 过长"""
 
 
 def _extract_sql(text: str) -> str:
@@ -79,6 +83,95 @@ def _hash_sql(sql: str) -> str:
     return hashlib.sha256(sql.strip().encode('utf-8')).hexdigest()
 
 
+async def _build_messages_with_context(
+    db_type: str,
+    schema_text: str,
+    question: str,
+    conversation_id: int = None,
+) -> list[dict]:
+    """构建带有对话上下文的消息列表
+    
+    Args:
+        db_type: 数据库类型
+        schema_text: 数据库 schema 文本
+        question: 当前用户问题
+        conversation_id: 对话 ID（可选）
+    
+    Returns:
+        包含系统提示、上下文历史和当前问题的消息列表
+    """
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT.format(
+            db_type=db_type,
+            schema_context=schema_text,
+        )},
+    ]
+    
+    # 如果有对话ID，获取历史消息作为上下文
+    if conversation_id:
+        history = get_history()
+        context_messages = await history.get_conversation_messages(conversation_id)
+        
+        # 只保留最近的 MAX_CONTEXT_MESSAGES 条消息
+        if context_messages:
+            context_messages = context_messages[-MAX_CONTEXT_MESSAGES:]
+            
+            for msg in context_messages:
+                # 添加用户问题
+                messages.append({
+                    "role": "user",
+                    "content": CONTEXT_PROMPT.format(
+                        question=msg["question"],
+                    ),
+                })
+                
+                # 添加助手回复（SQL结果）
+                result_summary = msg.get("result_json")
+                if result_summary:
+                    try:
+                        result_data = json.loads(result_summary)
+                        rows = result_data.get("rows", [])
+                        row_count = result_data.get("row_count", 0)
+                        columns = result_data.get("columns", [])
+                        
+                        # 构建结果摘要
+                        if row_count > 0 and columns:
+                            summary_lines = []
+                            summary_lines.append(f"执行结果: {row_count} 行数据")
+                            summary_lines.append(f"列: {', '.join(str(c) for c in columns)}")
+                            
+                            # 如果行数较少，显示部分数据
+                            if row_count <= 5:
+                                for i, row in enumerate(rows[:3]):
+                                    summary_lines.append(f"  行{i+1}: {', '.join(str(v) for v in row)}")
+                            else:
+                                summary_lines.append(f"  (显示前3行)...")
+                            
+                            result_text = "\n".join(summary_lines)
+                        else:
+                            result_text = f"执行完成，影响 {result_data.get('affected_rows', 0)} 行"
+                    except:
+                        result_text = f"SQL: {msg['sql']}"
+                else:
+                    result_text = f"SQL: {msg['sql']}"
+                
+                messages.append({
+                    "role": "assistant",
+                    "content": result_text,
+                })
+    
+    # 添加当前问题
+    messages.append({
+        "role": "user",
+        "content": NL_TO_SQL_PROMPT.format(
+            db_type=db_type,
+            question=question,
+        ),
+    })
+    
+    return messages
+
+
 def _validate_request() -> tuple:
     config = get_config()
     llm = get_llm()
@@ -102,16 +195,12 @@ async def preview_query(request: QueryRequest):
     schema_text = await db.get_schema_text()
 
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT.format(
-                db_type=db_type,
-                schema_context=schema_text,
-            )},
-            {"role": "user", "content": NL_TO_SQL_PROMPT.format(
-                db_type=db_type,
-                question=request.question,
-            )},
-        ]
+        messages = await _build_messages_with_context(
+            db_type=db_type,
+            schema_text=schema_text,
+            question=request.question,
+            conversation_id=request.conversation_id,
+        )
         sql_text = await llm.chat(messages, temperature=0.1)
         sql_text = _extract_sql(sql_text)
 
@@ -177,16 +266,12 @@ async def execute_query(request: QueryRequest):
     else:
         # 非确认执行，正常调用 LLM 生成 SQL
         try:
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT.format(
-                    db_type=db_type,
-                    schema_context=schema_text,
-                )},
-                {"role": "user", "content": NL_TO_SQL_PROMPT.format(
-                    db_type=db_type,
-                    question=request.question,
-                )},
-            ]
+            messages = await _build_messages_with_context(
+                db_type=db_type,
+                schema_text=schema_text,
+                question=request.question,
+                conversation_id=request.conversation_id,
+            )
             sql_text = await llm.chat(messages, temperature=0.1)
             sql_text = _extract_sql(sql_text)
         except Exception as e:
