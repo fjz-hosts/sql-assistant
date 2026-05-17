@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .query import router as query_router
+from .sql_query import router as sql_query_router
 from .config import router as config_router
 from .conversation import router as conversation_router
 from .backup import router as backup_router
@@ -16,6 +17,7 @@ from .health import router as health_router
 router = APIRouter(prefix="/api")
 
 router.include_router(query_router)
+router.include_router(sql_query_router)
 router.include_router(config_router)
 router.include_router(conversation_router)
 router.include_router(backup_router)

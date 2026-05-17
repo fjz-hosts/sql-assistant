@@ -40,6 +40,30 @@ class QueryResponse(BaseModel):
     pagination: Optional[dict] = None
 
 
+# ---- Direct SQL Query ----
+
+class DirectSQLRequest(BaseModel):
+    sql: str = Field(description="直接执行的 SQL 语句")
+    conversation_id: Optional[int] = Field(default=None, description="对话ID")
+    page: int = Field(default=1, ge=1, description="结果页码")
+    page_size: int = Field(default=100, ge=1, le=1000, description="每页记录数")
+    confirmed: bool = Field(default=False, description="用户是否已确认执行")
+
+
+class DirectSQLResponse(BaseModel):
+    success: bool
+    sql: str = ""
+    result: Optional[dict] = None
+    error: Optional[str] = None
+    history_id: Optional[int] = None
+    conversation_id: Optional[int] = None
+    pagination: Optional[dict] = None
+    requires_confirmation: bool = False
+    confirmation_reason: str = ""
+    warning: str = ""
+    risk_level: str = "none"
+
+
 # ---- Conversation ----
 
 class ConversationRequest(BaseModel):

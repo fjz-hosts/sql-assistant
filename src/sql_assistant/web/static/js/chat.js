@@ -9,6 +9,7 @@ function updateConnectionStatus() {
     const text = dom.connectionStatus.querySelector('.status-text');
 
     const refreshBtn = $('btn-refresh-schema');
+    const isSQLMode = state.queryMode === 'sql';
 
     if (hasLLM && hasDB) {
         if (state.schemaError) {
@@ -23,10 +24,23 @@ function updateConnectionStatus() {
         }
         dom.btnSend.disabled = false;
         if (refreshBtn) refreshBtn.style.display = 'flex';
+    } else if (isSQLMode && hasDB) {
+        if (state.schemaError) {
+            dot.className = 'status-dot error';
+            text.textContent = `DB: ${state.activeDB} | Schema 加载失败`;
+        } else if (state.schemaLoaded) {
+            dot.className = 'status-dot online';
+            text.textContent = `DB: ${state.activeDB} (${state.tableCount} 表) - SQL 模式`;
+        } else {
+            dot.className = 'status-dot online';
+            text.textContent = `DB: ${state.activeDB} - SQL 模式`;
+        }
+        dom.btnSend.disabled = false;
+        if (refreshBtn) refreshBtn.style.display = 'flex';
     } else if (hasLLM || hasDB) {
         dot.className = 'status-dot error';
         text.textContent = hasLLM ? '请配置数据库连接' : '请配置 LLM';
-        dom.btnSend.disabled = true;
+        dom.btnSend.disabled = !isSQLMode || !hasDB;
         if (refreshBtn) refreshBtn.style.display = 'none';
     } else {
         dot.className = 'status-dot offline';
@@ -193,6 +207,14 @@ function changePage(delta) {
 async function sendQuery(question) {
     if (!question.trim()) return;
 
+    if (state.queryMode === 'sql') {
+        return sendDirectSQL(question);
+    }
+
+    return sendNaturalLanguageQuery(question);
+}
+
+async function sendNaturalLanguageQuery(question) {
     addMessage('user', escapeHtml(question));
     dom.queryInput.value = '';
     dom.queryInput.style.height = 'auto';
@@ -253,6 +275,109 @@ async function sendQuery(question) {
     loadConversations();
 }
 
+async function sendDirectSQL(sql) {
+    addMessage('user', escapeHtml(sql));
+    dom.queryInput.value = '';
+    dom.queryInput.style.height = 'auto';
+
+    const msgDiv = addMessage('assistant', '<div class="loading-dots"><span></span><span></span><span></span></div>');
+    const contentDiv = msgDiv.querySelector('.message-content');
+
+    try {
+        if (!state.currentConversationId) {
+            const convData = await API.post('/api/conversations', { title: `[SQL] ${sql.slice(0, 50)}` });
+            state.currentConversationId = convData.id;
+            await loadConversations();
+        }
+
+        const queryParams = {
+            sql,
+            conversation_id: state.currentConversationId
+        };
+
+        state.pendingQuestion = sql;
+
+        contentDiv.innerHTML = '<div class="streaming-indicator">正在执行 SQL...</div>';
+
+        const data = await API.post('/api/sql/execute', queryParams);
+
+        if (!data.success) {
+            if (data.requires_confirmation) {
+                contentDiv.innerHTML = '';
+                contentDiv.appendChild(addSQLBlock(data.sql));
+
+                if (data.warning) {
+                    const warnDiv = document.createElement('div');
+                    warnDiv.className = 'sql-warning-box';
+                    warnDiv.textContent = `⚠️ ${data.warning}`;
+                    warnDiv.style.display = 'block';
+                    contentDiv.insertBefore(warnDiv, contentDiv.firstChild);
+                }
+
+                window.pendingSQLData = {
+                    question: `[SQL] ${sql.slice(0, 100)}`,
+                    sql: data.sql,
+                    sqlHash: null,
+                    conversationId: state.currentConversationId,
+                    contentDiv: contentDiv,
+                    msgDiv: msgDiv,
+                    isDirectSQL: true
+                };
+                showSQLConfirmDialog({
+                    requires_confirmation: true,
+                    confirmation_reason: data.confirmation_reason,
+                    warning: data.warning,
+                    risk_level: data.risk_level,
+                    sql: data.sql
+                });
+                return;
+            }
+
+            contentDiv.innerHTML = `<div class="error-message">${escapeHtml(data.error)}</div>`;
+            return;
+        }
+
+        contentDiv.innerHTML = '';
+
+        const operationLabel = document.createElement('div');
+        operationLabel.className = 'message-label';
+        operationLabel.textContent = 'SQL 直接查询';
+        contentDiv.appendChild(operationLabel);
+
+        contentDiv.appendChild(addSQLBlock(data.sql));
+
+        if (data.result) {
+            contentDiv.appendChild(addResultTable(data.result, data.pagination));
+        }
+    } catch (err) {
+        contentDiv.innerHTML = `<div class="error-message">${escapeHtml(err.message)}</div>`;
+    }
+
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+    loadConversations();
+}
+
+function switchQueryMode(mode) {
+    state.queryMode = mode;
+    const textarea = dom.queryInput;
+    const placeholderEl = $('query-placeholder');
+
+    if (mode === 'sql') {
+        textarea.placeholder = '输入 SQL 语句，例如：SELECT * FROM users WHERE id = 1';
+        if (placeholderEl) placeholderEl.textContent = '输入 SQL 语句';
+    } else {
+        textarea.placeholder = '输入自然语言查询，例如：查询所有用户的姓名和邮箱';
+        if (placeholderEl) placeholderEl.textContent = '按 Enter 发送，Shift+Enter 换行';
+    }
+
+    const nlBtn = $('btn-mode-nl');
+    const sqlBtn = $('btn-mode-sql');
+    if (nlBtn) nlBtn.classList.toggle('active', mode === 'nl');
+    if (sqlBtn) sqlBtn.classList.toggle('active', mode === 'sql');
+
+    updateConnectionStatus();
+}
+
 window.updateConnectionStatus = updateConnectionStatus;
 window.refreshSchema = refreshSchema;
 window.addMessage = addMessage;
@@ -261,3 +386,5 @@ window.addResultTable = addResultTable;
 window.changePage = changePage;
 window.sendQuery = sendQuery;
 window.showExportMenu = showExportMenu;
+window.switchQueryMode = switchQueryMode;
+window.sendDirectSQL = sendDirectSQL;

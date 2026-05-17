@@ -17,6 +17,7 @@ const state = {
     streamingEnabled: false,
     pendingPageChange: null,
     pendingQuestion: '',
+    queryMode: 'nl',
 };
 
 // DOM Elements Helper

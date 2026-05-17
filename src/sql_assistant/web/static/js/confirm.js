@@ -40,7 +40,7 @@ function hideSQLConfirmDialog() {
 async function confirmAndExecuteSQL() {
     if (!window.pendingSQLData) return;
 
-    const { question, sql, sqlHash, conversationId, contentDiv, msgDiv } = window.pendingSQLData;
+    const { question, sql, sqlHash, conversationId, contentDiv, msgDiv, isDirectSQL } = window.pendingSQLData;
 
     hideSQLConfirmDialog();
 
@@ -53,15 +53,46 @@ async function confirmAndExecuteSQL() {
     loadingDiv.style.marginTop = '12px';
     contentDiv.appendChild(loadingDiv);
 
+    if (isDirectSQL) {
+        await executeConfirmedDirectSQL(sql, conversationId, contentDiv, msgDiv);
+        return;
+    }
+
     const queryParams = {
         question,
         conversation_id: conversationId,
         confirmed: true,
         sql_hash: sqlHash,
-        sql: sql  // 直接传递 SQL 语句，避免 LLM 重新生成导致 hash 不匹配
+        sql: sql
     };
 
     await executeConfirmedQuery(queryParams, contentDiv, msgDiv);
+}
+
+async function executeConfirmedDirectSQL(sql, conversationId, contentDiv, msgDiv) {
+    try {
+        const data = await API.post('/api/sql/execute', {
+            sql,
+            conversation_id: conversationId,
+            confirmed: true,
+        });
+
+        const loadingDots = contentDiv.querySelector('.loading-dots');
+        if (loadingDots) loadingDots.remove();
+
+        if (!data.success) {
+            contentDiv.innerHTML += `<div class="error-message">${escapeHtml(data.error)}</div>`;
+        } else if (data.result) {
+            contentDiv.appendChild(addResultTable(data.result, data.pagination));
+        }
+    } catch (err) {
+        const loadingDots = contentDiv.querySelector('.loading-dots');
+        if (loadingDots) loadingDots.remove();
+        contentDiv.innerHTML += `<div class="error-message">${escapeHtml(err.message)}</div>`;
+    }
+
+    dom.chatMessages.scrollTop = dom.chatMessages.scrollTop;
+    loadConversations();
 }
 
 async function executeConfirmedQuery(queryParams, contentDiv, msgDiv) {
