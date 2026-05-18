@@ -1,6 +1,6 @@
 [project]
 name = "sql-assistant"
-version = "1.0.6"
+version = "1.0.7"
 description = "SQL Smart Assistant - Natural Language to SQL query tool supporting major databases and LLMs"
 requires-python = ">=3.10"
 authors = [

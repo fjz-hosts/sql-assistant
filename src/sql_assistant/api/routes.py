@@ -13,6 +13,8 @@ from .export import router as export_router
 from .templates import router as templates_router
 from .explain import router as explain_router
 from .health import router as health_router
+from .insights import router as insights_router
+from .shortcuts import router as shortcuts_router
 
 router = APIRouter(prefix="/api")
 
@@ -27,3 +29,5 @@ router.include_router(export_router)
 router.include_router(templates_router)
 router.include_router(explain_router)
 router.include_router(health_router)
+router.include_router(insights_router)
+router.include_router(shortcuts_router)

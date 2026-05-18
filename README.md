@@ -21,24 +21,6 @@
 </p>
 
 
-## 🗞️ News
-
-- **2026-05-16** — 🎉 SQL Smart Assistant v1.0.4 released!
-  - Fixed database health check data accuracy issues
-  - Fixed connection status showing 0 (connection lifecycle management bug)
-  - Fixed table count discrepancy (removed LIMIT constraint)
-  - Fixed performance metrics (QPS, slow queries, connections)
-- **2026-05-15** — 🎉 SQL Smart Assistant v1.0.3 released!
-  - Added Database Health Check/Monitoring feature
-  - Connection status monitoring
-  - Table size and index usage statistics
-  - Basic performance metrics
-- **2026-05-14** — 🎉 SQL Smart Assistant v1.0.2 released!
-  - Added SQL Template/Favorite functionality
-  - Added Execution Plan Analysis feature
-- **2026-05-10** — 🎉 SQL Smart Assistant v1.0.0 released!
-
-
 ## 📖 Overview
 
 **SQL Smart Assistant** is an intelligent database query tool based on large language models, supporting natural language to SQL conversion, multi-database connection management, query history records, and more.
@@ -531,6 +513,9 @@ Visit **http://localhost:5010/docs** after starting the service to view Swagger 
 | `/api/templates` | GET/POST | Get template list / Create new template |
 | `/api/templates/{id}` | GET/PUT/DELETE | Get/update/delete template |
 | `/api/explain` | POST | Analyze SQL execution plan |
+| `/api/shortcuts` | GET | Get keyboard shortcuts configuration |
+| `/api/shortcuts/defaults` | GET | Get default shortcuts |
+| `/api/shortcuts/{action_id}` | PUT | Update a shortcut key binding |
 
 
 ## ⚠️ Notes

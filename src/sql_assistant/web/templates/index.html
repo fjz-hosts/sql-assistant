@@ -59,6 +59,9 @@
                         <button class="navbar-btn" id="btn-health" title="数据库健康检查">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                         </button>
+                        <button class="navbar-btn" id="btn-insights" title="数据洞察助手">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        </button>
                         <div class="navbar-divider"></div>
                         <div class="color-picker-container">
                             <button class="navbar-btn" id="btn-color-picker" title="选择主题色">
@@ -78,6 +81,9 @@
                                 </div>
                             </div>
                         </div>
+                        <button class="navbar-btn" id="btn-shortcuts" title="键盘快捷键">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M16 12h.01M7 16h10"/></svg>
+                        </button>
                         <button class="navbar-btn" id="btn-settings" title="设置">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         </button>
@@ -336,7 +342,7 @@
                 <!-- 关于面板 -->
                 <div class="tab-panel" id="tab-about">
                     <div class="about-content">
-                        <h3>SQL 智能助手 v1.0.3</h3>
+                        <h3>SQL 智能助手 v1.0.5</h3>
                         <p>自然语言 → SQL → 查询结果</p>
                         <div class="about-features">
                             <h4>功能特性</h4>
@@ -495,6 +501,58 @@
         </div>
     </div>
 
+    <!-- 数据洞察面板 -->
+    <div class="insights-overlay" id="insights-overlay"></div>
+    <div class="insights-panel" id="insights-panel">
+        <div class="insights-panel-header">
+            <h2>🔍 数据洞察助手</h2>
+            <button class="btn-icon" id="btn-close-insights" title="关闭">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="insights-table-selector">
+            <select id="insights-table-select" onchange="insightsManager.onTableChange()"></select>
+        </div>
+        <div class="insights-tabs">
+            <button class="insights-tab active" data-tab="overview" onclick="insightsManager.switchTab('overview')">概览</button>
+            <button class="insights-tab" data-tab="summary" onclick="insightsManager.switchTab('summary')">数据摘要</button>
+            <button class="insights-tab" data-tab="outliers" onclick="insightsManager.switchTab('outliers')">异常检测</button>
+            <button class="insights-tab" data-tab="trends" onclick="insightsManager.switchTab('trends')">趋势分析</button>
+            <button class="insights-tab" data-tab="report" onclick="insightsManager.switchTab('report')">报告</button>
+        </div>
+        <div class="insights-panel-body">
+            <div class="insights-content" id="insights-content">
+                <div class="insights-loading">
+                    <div class="spinner"></div>
+                    <p>正在加载...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 快捷键配置面板 -->
+    <div class="shortcuts-overlay" id="shortcuts-overlay"></div>
+    <div class="shortcuts-panel" id="shortcuts-panel">
+        <div class="shortcuts-panel-header">
+            <h2>⌨️ 键盘快捷键</h2>
+            <button class="btn-icon" id="btn-close-shortcuts" title="关闭">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="shortcuts-panel-body" id="shortcuts-panel-body">
+        </div>
+        <div class="recording-hint" id="recording-hint">
+            🎹 请按下新的快捷键组合...
+        </div>
+        <div class="shortcuts-footer">
+            <div class="shortcuts-toggle">
+                <label class="shortcuts-toggle-label" for="shortcuts-enabled">启用快捷键</label>
+                <input type="checkbox" id="shortcuts-enabled" checked>
+            </div>
+            <button class="shortcuts-reset-btn" id="btn-reset-shortcuts">恢复默认</button>
+        </div>
+    </div>
+
     <script src="/static/js/theme-manager.js"></script>
     <script src="/static/js/color-theme-manager.js"></script>
     <script src="/static/js/api.js"></script>
@@ -509,7 +567,9 @@
     <script src="/static/js/settings.js"></script>
     <script src="/static/js/backup.js"></script>
     <script src="/static/js/health.js"></script>
+    <script src="/static/js/insights.js"></script>
     <script src="/static/js/navbar.js"></script>
+    <script src="/static/js/shortcuts.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

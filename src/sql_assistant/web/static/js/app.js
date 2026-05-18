@@ -164,16 +164,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize health manager
     healthManager.init();
 
-    // Keyboard shortcut: Escape to close modal
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && dom.settingsModal.classList.contains('active')) {
-            closeSettings();
-        }
-        if (e.key === 'Escape' && $('restore-modal').classList.contains('active')) {
-            closeRestoreModal();
-        }
-        if (e.key === 'Escape' && $('sql-confirm-modal').classList.contains('active')) {
-            hideSQLConfirmDialog();
-        }
-    });
+    // Insights panel
+    const insightsBtn = $('btn-insights');
+    if (insightsBtn) {
+        insightsBtn.addEventListener('click', () => insightsManager.showPanel());
+    }
+
+    // Initialize insights manager
+    insightsManager.init();
+
+    ShortcutManager.init();
+
+    ShortcutManager.bindPanelEvents();
 });
