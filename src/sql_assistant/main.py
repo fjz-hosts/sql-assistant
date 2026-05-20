@@ -1,5 +1,7 @@
 """SQL 智能助手 - 主入口"""
 
+import os
+import subprocess
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -59,34 +61,57 @@ async def index(request: Request):
     return templates.TemplateResponse(request, "index.html", {"request": request})
 
 
+def _hide_subprocess_windows():
+    """在 Windows 后台模式下，隐藏所有子进程的控制台窗口"""
+    if os.name != "nt":
+        return
+    try:
+        _original_init = subprocess.Popen.__init__
+
+        def _patched_init(self, *args, startupinfo=None, **kwargs):
+            if startupinfo is None:
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+            _original_init(self, *args, startupinfo=startupinfo, **kwargs)
+
+        subprocess.Popen.__init__ = _patched_init
+    except Exception:
+        pass
+
+
 def main():
     """CLI 入口"""
     import uvicorn
 
-    # 确保控制台支持 UTF-8
-    try:
-        sys.stdout.reconfigure(encoding='utf-8')
-    except Exception:
-        pass
+    is_backend = not sys.executable.lower().endswith("python.exe")
 
-    print("=" * 60)
-    print("  SQL Assistant v1.0.0")
-    print("  Natural Language -> SQL -> Results")
-    print("=" * 60)
-    print()
-    print("  URL: http://localhost:5010")
-    print("  Docs: http://localhost:5010/docs")
-    print()
-    print("  Configure LLM and Database in Settings (gear icon)")
-    print("=" * 60)
-    print()
+    if is_backend:
+        _hide_subprocess_windows()
+    else:
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+
+        print("=" * 60)
+        print("  SQL Assistant v1.0.0")
+        print("  Natural Language -> SQL -> Results")
+        print("=" * 60)
+        print()
+        print("  URL: http://localhost:5010")
+        print("  Docs: http://localhost:5010/docs")
+        print()
+        print("  Configure LLM and Database in Settings (gear icon)")
+        print("=" * 60)
+        print()
 
     uvicorn.run(
         "sql_assistant.main:app",
         host="0.0.0.0",
         port=5010,
         reload=False,
-        log_level="info",
+        log_level="info" if not is_backend else "error",
     )
 
 

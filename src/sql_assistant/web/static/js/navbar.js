@@ -50,6 +50,15 @@ const NavbarManager = {
             settingsBtn.addEventListener('click', openSettings);
         }
 
+        // Service button
+        const serviceBtn = document.getElementById('btn-service');
+        if (serviceBtn) {
+            serviceBtn.addEventListener('click', () => {
+                openSettings();
+                setTimeout(() => switchTab('about'), 100);
+            });
+        }
+
         // Templates button
         const templatesBtn = document.getElementById('btn-templates');
         if (templatesBtn) {

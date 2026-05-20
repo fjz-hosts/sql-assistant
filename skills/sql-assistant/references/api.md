@@ -159,3 +159,39 @@ Get performance metrics
     "query_per_second": 125.5
 }
 ```
+
+### GET /api/service/status
+Get service installation status
+
+**Response:**
+```json
+{
+    "installed": true,
+    "platform": "Windows",
+    "service_name": "sql-assistant"
+}
+```
+
+### POST /api/service/install
+Install SQL Assistant as an auto-start system service
+
+**Response:**
+```json
+{
+    "success": true,
+    "platform": "Windows",
+    "message": "已创建开机自启计划任务 (Task Scheduler)"
+}
+```
+
+### POST /api/service/uninstall
+Uninstall the auto-start system service
+
+**Response:**
+```json
+{
+    "success": true,
+    "platform": "Windows",
+    "message": "已删除开机自启计划任务"
+}
+```

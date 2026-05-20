@@ -15,6 +15,7 @@ from .explain import router as explain_router
 from .health import router as health_router
 from .insights import router as insights_router
 from .shortcuts import router as shortcuts_router
+from .service import router as service_router
 
 router = APIRouter(prefix="/api")
 
@@ -31,3 +32,4 @@ router.include_router(explain_router)
 router.include_router(health_router)
 router.include_router(insights_router)
 router.include_router(shortcuts_router)
+router.include_router(service_router)

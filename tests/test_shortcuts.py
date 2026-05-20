@@ -109,4 +109,4 @@ class TestShortcutDefaults:
     def test_shortcuts_count(self):
         from sql_assistant.api.shortcuts import DEFAULT_SHORTCUTS
 
-        assert len(DEFAULT_SHORTCUTS) == 18
+        assert len(DEFAULT_SHORTCUTS) == 19

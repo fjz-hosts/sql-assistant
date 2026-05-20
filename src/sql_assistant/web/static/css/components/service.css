@@ -1,0 +1,201 @@
+/* === Service Manager === */
+.service-section {
+    margin-top: 24px;
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.service-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.service-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.service-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.service-status-dot.installed {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.service-status-dot.running {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: service-pulse 2s infinite;
+}
+
+.service-status-dot.not-installed {
+    background: var(--text-muted);
+}
+
+@keyframes service-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.service-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.service-info code {
+    background: var(--bg-tertiary);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.service-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-service-install {
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-service-install:hover {
+    background: var(--accent-hover);
+}
+
+.btn-service-install:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-service-start {
+    padding: 10px 24px;
+    background: var(--success);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-service-start:hover {
+    background: #2ea043;
+}
+
+.btn-service-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    display: none;
+}
+
+.btn-service-stop {
+    padding: 10px 24px;
+    background: var(--warning);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-service-stop:hover {
+    background: #b0881a;
+}
+
+.btn-service-stop:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    display: none;
+}
+
+.btn-service-uninstall {
+    padding: 10px 24px;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-service-uninstall:hover {
+    background: var(--danger);
+    color: #fff;
+}
+
+.btn-service-uninstall:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Navbar service button */
+.navbar-btn.btn-service {
+    position: relative;
+}
+
+.navbar-btn.btn-service .service-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.navbar-btn.btn-service .service-dot.installed {
+    background: var(--success);
+    box-shadow: 0 0 4px var(--success);
+}
+
+.navbar-btn.btn-service .service-dot.running {
+    background: var(--success);
+    box-shadow: 0 0 5px var(--success);
+    animation: service-pulse 2s infinite;
+}

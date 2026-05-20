@@ -117,6 +117,12 @@ const ShortcutManager = {
             category: '导航',
             action: 'toggleShortcutsPanel',
         },
+        installAsService: {
+            keys: ['Ctrl', 'Shift', 'S'],
+            description: '安装/卸载开机自启服务',
+            category: '导航',
+            action: 'installAsService',
+        },
     },
 
     init() {
@@ -360,6 +366,12 @@ const ShortcutManager = {
             }
             case 'toggleShortcutsPanel': {
                 this.togglePanel();
+                break;
+            }
+            case 'installAsService': {
+                if (typeof ServiceManager !== 'undefined' && ServiceManager.toggle) {
+                    ServiceManager.toggle();
+                }
                 break;
             }
         }

@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初始化导航栏
     NavbarManager.init();
 
+    // 初始化服务管理器
+    ServiceManager.init();
+
     // 加载流式响应设置
     state.streamingEnabled = false;
 

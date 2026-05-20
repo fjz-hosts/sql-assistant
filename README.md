@@ -167,6 +167,14 @@ Visit **http://localhost:5010** to start using!
 - **Performance Metrics**: Uptime, connection count, slow queries, QPS
 - **Multi-database Support**: MySQL, PostgreSQL, SQL Server, Redis, MongoDB
 
+### 11. Auto-Start System Service
+
+- **One-Click Install**: Install SQL Assistant as a system service for auto-start on boot
+- **Cross-Platform**: Supports Windows (Task Scheduler) and Linux (systemd)
+- **Status Indicator**: Visual indicator showing current service installation status
+- **Easy Uninstall**: One-click removal of the auto-start service without affecting project files
+- **Shortcut Support**: Quick toggle via `Ctrl+Shift+S` or navbar button
+
 
 ## <a id="system-architecture"></a> 🏗️ System Architecture
 
@@ -516,6 +524,9 @@ Visit **http://localhost:5010/docs** after starting the service to view Swagger 
 | `/api/shortcuts` | GET | Get keyboard shortcuts configuration |
 | `/api/shortcuts/defaults` | GET | Get default shortcuts |
 | `/api/shortcuts/{action_id}` | PUT | Update a shortcut key binding |
+| `/api/service/status` | GET | Get service installation status |
+| `/api/service/install` | POST | Install as auto-start service |
+| `/api/service/uninstall` | POST | Uninstall auto-start service |
 
 
 ## ⚠️ Notes

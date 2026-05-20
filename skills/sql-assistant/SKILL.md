@@ -209,6 +209,17 @@ Ask SQL Assistant to: Check database health
 Ask SQL Assistant to: Show me the database health status
 ```
 
+### 12. Service Auto-Start Management
+
+**Description**: Install or uninstall SQL Assistant as a system service for auto-start on boot
+
+**Usage**:
+```
+Ask SQL Assistant to: Install SQL Assistant as an auto-start service
+Ask SQL Assistant to: Uninstall the auto-start service
+Ask SQL Assistant to: Check auto-start service status
+```
+
 ## API Error Auto-Correction
 
 **IMPORTANT**: If any API call fails, the skill should:
@@ -240,6 +251,9 @@ The skill scripts automatically call these API endpoints:
 | `/api/backup` | POST | Create backup |
 | `/api/backup/list` | GET | List backups |
 | `/api/history` | GET | Query history |
+| `/api/service/status` | GET | Service installation status |
+| `/api/service/install` | POST | Install auto-start service |
+| `/api/service/uninstall` | POST | Uninstall auto-start service |
 
 ## Configuration Example
 
