@@ -354,6 +354,36 @@ class BackupManager:
             return True
         return False
 
+    def cleanup_old_backups(self, retention_count: int) -> int:
+        """清理旧备份，保留指定数量的最新备份
+        
+        Args:
+            retention_count: 保留的备份数量，0表示不限制
+            
+        Returns:
+            删除的备份数量
+        """
+        if retention_count <= 0:
+            return 0
+            
+        backups = self.list_backups()
+        
+        if len(backups) <= retention_count:
+            return 0
+            
+        # 按时间排序，最新的在前
+        backups.sort(key=lambda x: x.backup_time, reverse=True)
+        
+        # 需要删除的备份（超出保留数量的）
+        backups_to_delete = backups[retention_count:]
+        
+        deleted_count = 0
+        for backup in backups_to_delete:
+            if self.delete_backup(backup.backup_id):
+                deleted_count += 1
+                
+        return deleted_count
+
     async def restore(self, backup_id: str, restore_schema: bool = False, 
                     restore_data: bool = True, tables: Optional[List[str]] = None) -> RestoreResult:
         """从备份恢复数据库

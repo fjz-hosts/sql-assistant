@@ -209,6 +209,17 @@ class DatabaseConfig(BaseModel):
         return self.port or self.DEFAULT_PORTS.get(self.db_type, 0)
 
 
+class ScheduledBackupConfig(BaseModel):
+    """定时备份配置"""
+    enabled: bool = Field(default=False, description="是否启用定时备份")
+    hour: int = Field(default=2, description="每天几点执行备份（0-23）")
+    minute: int = Field(default=0, description="分钟数（0-59）")
+    backup_type: str = Field(default="full", description="备份类型: full / incremental")
+    retention_count: int = Field(default=7, description="最多保留备份数量，0表示不限制")
+    include_schema: bool = Field(default=True, description="是否包含表结构")
+    include_data: bool = Field(default=True, description="是否包含数据")
+
+
 class AppSettings(BaseModel):
     """应用全局设置"""
     llm_providers: list[LLMProviderConfig] = Field(default_factory=list)
@@ -217,3 +228,4 @@ class AppSettings(BaseModel):
     active_database: str = Field(default="", description="当前激活的数据库配置名称")
     max_history_rows: int = Field(default=1000, description="最大历史记录数")
     theme: Literal["light", "dark", "auto"] = Field(default="auto")
+    scheduled_backup: ScheduledBackupConfig = Field(default_factory=ScheduledBackupConfig, description="定时备份配置")

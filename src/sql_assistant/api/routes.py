@@ -16,6 +16,7 @@ from .health import router as health_router
 from .insights import router as insights_router
 from .shortcuts import router as shortcuts_router
 from .service import router as service_router
+from .scheduler import router as scheduler_router
 
 router = APIRouter(prefix="/api")
 
@@ -24,6 +25,7 @@ router.include_router(sql_query_router)
 router.include_router(config_router)
 router.include_router(conversation_router)
 router.include_router(backup_router)
+router.include_router(scheduler_router)
 router.include_router(schema_router)
 router.include_router(history_router)
 router.include_router(export_router)

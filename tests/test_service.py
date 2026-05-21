@@ -235,7 +235,10 @@ class TestServiceInstaller:
         assert result["success"] is False
         assert "error" in result
 
-    def test_start_returns_dict(self):
+    @patch("sql_assistant.service.installer._check_windows", return_value=True)
+    @patch("sql_assistant.service.installer._check_port", return_value=False)
+    @patch("sql_assistant.service.installer.platform.system", return_value="Windows")
+    def test_start_returns_dict(self, mock_system, mock_port, mock_windows):
         from sql_assistant.service.installer import start
 
         result = start()
@@ -312,7 +315,7 @@ class TestServiceAPIEndpoints:
         assert data["installed"] is False
         assert data["running"] is False
 
-    @patch("sql_assistant.service.installer.install", return_value={
+    @patch("sql_assistant.api.service.install", return_value={
         "success": True, "platform": "Windows", "message": "已创建"
     })
     def test_api_install_endpoint(self, mock_install):
@@ -321,7 +324,7 @@ class TestServiceAPIEndpoints:
         data = response.json()
         assert data["success"] is True
 
-    @patch("sql_assistant.service.installer.uninstall", return_value={
+    @patch("sql_assistant.api.service.uninstall", return_value={
         "success": True, "platform": "Windows", "message": "已删除"
     })
     def test_api_uninstall_endpoint(self, mock_uninstall):
@@ -330,7 +333,7 @@ class TestServiceAPIEndpoints:
         data = response.json()
         assert data["success"] is True
 
-    @patch("sql_assistant.service.installer.start", return_value={
+    @patch("sql_assistant.api.service.start", return_value={
         "success": True, "platform": "Windows", "message": "服务已启动"
     })
     def test_api_start_endpoint(self, mock_start):
@@ -339,7 +342,7 @@ class TestServiceAPIEndpoints:
         data = response.json()
         assert data["success"] is True
 
-    @patch("sql_assistant.service.installer.stop", return_value={
+    @patch("sql_assistant.api.service.stop", return_value={
         "success": True, "platform": "Windows", "message": "服务已停止"
     })
     def test_api_stop_endpoint(self, mock_stop):

@@ -245,6 +245,40 @@ class RestoreResponse(BaseModel):
     total_records: int = 0
 
 
+# ---- Scheduled Backup ----
+
+class ScheduledBackupRequest(BaseModel):
+    """定时备份配置请求模型"""
+    enabled: bool = Field(description="是否启用定时备份")
+    hour: int = Field(ge=0, le=23, description="每天几点执行备份（0-23）")
+    minute: int = Field(ge=0, le=59, description="分钟数（0-59）")
+    backup_type: str = Field(default="full", description="备份类型: full / incremental")
+    retention_count: int = Field(ge=0, description="最多保留备份数量，0表示不限制")
+    include_schema: bool = Field(default=True, description="是否包含表结构")
+    include_data: bool = Field(default=True, description="是否包含数据")
+
+
+class ScheduledBackupResponse(BaseModel):
+    """定时备份配置响应模型"""
+    enabled: bool
+    hour: int
+    minute: int
+    backup_type: str
+    retention_count: int
+    include_schema: bool
+    include_data: bool
+    next_run_time: Optional[str] = Field(default=None, description="下次执行时间")
+
+
+class ScheduledTaskStatus(BaseModel):
+    """定时任务状态响应模型"""
+    enabled: bool
+    next_run_time: Optional[str] = None
+    last_run_time: Optional[str] = None
+    last_run_success: Optional[bool] = None
+    last_run_message: Optional[str] = None
+
+
 # ---- Templates ----
 
 class TemplateRequest(BaseModel):

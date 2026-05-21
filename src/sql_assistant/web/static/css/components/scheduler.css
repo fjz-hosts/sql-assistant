@@ -1,0 +1,197 @@
+/* === Scheduled Backup Section === */
+
+.scheduled-backup-section {
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.scheduled-backup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scheduled-backup-header h4 {
+    font-size: 14px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.scheduled-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.scheduled-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.toggle-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.scheduled-backup-form {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.scheduled-backup-form.enabled {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.scheduled-backup-form .form-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+
+.scheduled-backup-form .form-group {
+    flex: 1;
+}
+
+.scheduled-backup-form .form-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.scheduled-backup-form .form-group input[type="number"],
+.scheduled-backup-form .form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.scheduled-backup-form .form-group input[type="number"]:focus,
+.scheduled-backup-form .form-group select:focus {
+    border-color: var(--accent);
+}
+
+.scheduled-backup-form .form-group input[type="number"]:disabled,
+.scheduled-backup-form .form-group select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.time-input-group input[type="number"] {
+    flex: 1;
+    max-width: 80px;
+    text-align: center;
+}
+
+.time-separator {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.form-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.scheduled-status {
+    display: flex;
+    gap: 24px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.status-value {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.status-value.success {
+    color: var(--success);
+}
+
+.status-value.error {
+    color: var(--danger);
+}
+
+.scheduled-backup-form .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.scheduled-backup-form .form-actions button {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.scheduled-backup-form .form-actions .btn-primary {
+    background: var(--accent);
+    color: white;
+}
+
+.scheduled-backup-form .form-actions .btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.scheduled-backup-form .form-actions .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.scheduled-backup-form .form-actions .btn-text {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.scheduled-backup-form .form-actions .btn-text:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.scheduled-backup-form .form-actions .btn-text:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

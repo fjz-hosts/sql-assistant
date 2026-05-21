@@ -309,6 +309,73 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- 定时备份配置 -->
+                    <div class="scheduled-backup-section">
+                        <div class="scheduled-backup-header">
+                            <h4>⏰ 定时备份</h4>
+                            <label class="scheduled-toggle">
+                                <input type="checkbox" id="scheduled-enabled">
+                                <span class="toggle-label">启用定时备份</span>
+                            </label>
+                        </div>
+                        <div class="scheduled-backup-form" id="scheduled-backup-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>执行时间</label>
+                                    <div class="time-input-group">
+                                        <input type="number" id="scheduled-hour" min="0" max="23" placeholder="时">
+                                        <span class="time-separator">:</span>
+                                        <input type="number" id="scheduled-minute" min="0" max="59" placeholder="分">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>备份类型</label>
+                                    <select id="scheduled-backup-type">
+                                        <option value="full">全量备份</option>
+                                        <option value="incremental">增量备份</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>保留备份数量</label>
+                                    <input type="number" id="scheduled-retention" min="0" placeholder="0表示不限制">
+                                    <span class="form-hint">超过此数量时自动删除最旧的备份</span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="scheduled-include-schema" checked> 包含表结构
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="scheduled-include-data" checked> 包含数据
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="scheduled-status">
+                                <div class="status-item">
+                                    <span class="status-label">下次执行:</span>
+                                    <span id="scheduled-next-run" class="status-value">--</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">上次执行:</span>
+                                    <span id="scheduled-last-run" class="status-value">--</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">上次结果:</span>
+                                    <span id="scheduled-last-result" class="status-value">--</span>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-primary" id="btn-save-scheduled">保存配置</button>
+                                <button class="btn-text" id="btn-run-scheduled-now">立即执行一次</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 恢复备份模态框 -->
@@ -346,7 +413,7 @@
                 <!-- 关于面板 -->
                 <div class="tab-panel" id="tab-about">
                     <div class="about-content">
-                        <h3>SQL 智能助手 v1.0.5</h3>
+                        <h3>SQL 智能助手 v1.1.0</h3>
                         <p>自然语言 → SQL → 查询结果</p>
                         <div class="about-features">
                             <h4>功能特性</h4>
@@ -607,6 +674,7 @@
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/shortcuts.js"></script>
     <script src="/static/js/service.js"></script>
+    <script src="/static/js/scheduler.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

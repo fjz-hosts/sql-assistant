@@ -15,6 +15,7 @@ from .api.routes import router as api_router
 from .database.history import close_history_manager
 from .llm.manager import get_llm_manager
 from .database.manager import get_db_manager
+from .database.scheduler import get_backup_scheduler
 
 # 模板和静态文件路径
 BASE_DIR = Path(__file__).parent
@@ -25,7 +26,15 @@ STATIC_DIR = BASE_DIR / "web" / "static"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
+    # 启动定时备份调度器
+    scheduler = get_backup_scheduler()
+    scheduler.start()
+    
     yield
+    
+    # 停止定时备份调度器
+    scheduler.stop()
+    
     await get_llm_manager().close_all()
     await get_db_manager().close_all()
     await close_history_manager()

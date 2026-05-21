@@ -1,6 +1,6 @@
 [project]
 name = "sql-assistant"
-version = "1.0.8"
+version = "1.1.0"
 description = "SQL Smart Assistant - Natural Language to SQL query tool supporting major databases and LLMs"
 requires-python = ">=3.10"
 authors = [
@@ -50,6 +50,12 @@ readme = "README.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sql_assistant"]
+
+[tool.hatch.build.targets.wheel.include]
+paths = [
+    "src/sql_assistant/web/static",
+    "src/sql_assistant/web/templates"
+]
 
 [project.scripts]
 sql-assistant = "sql_assistant.main:main"

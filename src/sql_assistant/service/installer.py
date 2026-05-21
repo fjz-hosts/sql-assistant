@@ -124,8 +124,8 @@ def stop() -> dict:
 
 def _check_windows() -> bool:
     result = subprocess.run(
-        ["schtasks.exe", "/query", "/tn", SERVICE_NAME],
-        capture_output=True, text=True,
+        ["nssm", "status", SERVICE_NAME],
+        capture_output=True, text=True, encoding='utf-8', errors='ignore',
     )
     return result.returncode == 0
 
@@ -134,29 +134,40 @@ def _install_windows() -> str:
     messages = []
 
     if not _check_windows():
-        python_path = _get_python_path()
+        pythonw_path = _get_pythonw_path()
+        project_root = str(_get_project_root())
+        log_dir = _get_data_dir()
 
         result = subprocess.run(
             [
-                "schtasks.exe", "/create",
-                "/tn", SERVICE_NAME,
-                "/tr", f'"{python_path}" -m sql_assistant.main',
-                "/sc", "onlogon",
-                "/rl", "highest",
-                "/f",
+                "nssm", "install", SERVICE_NAME,
+                pythonw_path,
+                "-m", "sql_assistant.main",
             ],
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding='utf-8', errors='ignore',
+            cwd=project_root,
         )
 
         if result.returncode != 0:
-            raise RuntimeError(f"创建计划任务失败: {result.stderr.strip()}")
+            raise RuntimeError(f"NSSM 安装服务失败")
 
-        messages.append("已创建开机自启计划任务 (Task Scheduler)")
+        subprocess.run(["nssm", "set", SERVICE_NAME, "AppDirectory", project_root], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        subprocess.run(["nssm", "set", SERVICE_NAME, "DisplayName", "SQL Assistant"], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        subprocess.run(["nssm", "set", SERVICE_NAME, "Description", "SQL Assistant Service"], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        subprocess.run(["nssm", "set", SERVICE_NAME, "Start", "SERVICE_AUTO_START"], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        subprocess.run(["nssm", "set", SERVICE_NAME, "AppStdout", str(log_dir / "app.log")], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        subprocess.run(["nssm", "set", SERVICE_NAME, "AppStderr", str(log_dir / "app_error.log")], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+
+        messages.append("已通过 NSSM 创建 Windows 服务")
+        subprocess.run(["nssm", "start", SERVICE_NAME], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        messages.append("服务已启动")
     else:
-        messages.append("计划任务已存在")
-
-    _start_detached()
-    messages.append("服务已在后台启动")
+        messages.append("Windows 服务已存在")
+        if not _check_port():
+            subprocess.run(["nssm", "start", SERVICE_NAME], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+            messages.append("服务已启动")
+        else:
+            messages.append("服务已在运行中")
 
     _stop_current_if_frontend()
 
@@ -167,19 +178,36 @@ def _uninstall_windows() -> str:
     messages = []
 
     if _check_windows():
+        # 先停止服务
+        subprocess.run(["nssm", "stop", SERVICE_NAME], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        import time
+        time.sleep(1)
+        
+        # 删除服务
         result = subprocess.run(
-            ["schtasks.exe", "/delete", "/tn", SERVICE_NAME, "/f"],
-            capture_output=True, text=True,
+            ["nssm", "remove", SERVICE_NAME, "confirm"],
+            capture_output=True, text=True, encoding='utf-8', errors='ignore',
         )
 
         if result.returncode != 0:
-            raise RuntimeError(f"删除计划任务失败: {result.stderr.strip()}")
+            raise RuntimeError(f"NSSM 删除服务失败")
 
-        messages.append("已删除开机自启计划任务")
+        messages.append("已通过 NSSM 删除 Windows 服务")
     else:
-        messages.append("计划任务不存在")
+        messages.append("Windows 服务不存在")
 
-    _stop_windows()
+    # 如果端口还在占用，强制杀掉进程
+    if _check_port():
+        pid = _find_pid_by_port(SERVICE_PORT)
+        if pid is not None:
+            try:
+                os.kill(pid, signal.SIGTERM)
+                time.sleep(0.5)
+                if _check_port():
+                    os.kill(pid, signal.SIGKILL)
+                messages.append("已强制终止残留进程")
+            except OSError:
+                pass
 
     return "；".join(messages)
 
@@ -188,28 +216,36 @@ def _start_windows() -> str:
     if _check_port():
         return "服务已在运行中"
 
-    _start_detached()
+    if not _check_windows():
+        raise RuntimeError("请先安装服务再启动")
+
+    subprocess.run(["nssm", "start", SERVICE_NAME], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+    messages = ["服务已通过 NSSM 启动"]
 
     _stop_current_if_frontend()
 
-    return "服务已在后台启动"
+    return "；".join(messages)
 
 
 def _stop_windows() -> str:
     if not _check_port():
         return "服务未在运行"
 
-    pid = _find_pid_by_port(SERVICE_PORT)
-    if pid is not None:
-        try:
-            os.kill(pid, signal.SIGTERM)
-            import time
-            time.sleep(0.5)
-            if _check_port():
+    if _check_windows():
+        subprocess.run(["nssm", "stop", SERVICE_NAME], capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        return "服务已通过 NSSM 停止"
+    else:
+        pid = _find_pid_by_port(SERVICE_PORT)
+        if pid is not None:
+            try:
                 os.kill(pid, signal.SIGTERM)
-            return "服务已停止"
-        except OSError:
-            pass
+                import time
+                time.sleep(0.5)
+                if _check_port():
+                    os.kill(pid, signal.SIGTERM)
+                return "服务已停止"
+            except OSError:
+                pass
 
     return "服务已停止"
 
@@ -275,9 +311,13 @@ def _stop_current_if_frontend() -> None:
     """如果当前是前台进程，后台启动成功后自动停止前台，让后台接管"""
     if not _is_frontend_process():
         return
-    if not _check_port():
-        return
-    os._exit(0)
+    
+    # 等待服务启动（最多等待5秒）
+    import time
+    for _ in range(50):
+        if _check_port():
+            os._exit(0)
+        time.sleep(0.1)
 
 
 # ==================== Linux ====================
