@@ -103,7 +103,7 @@ function addSQLBlock(sql) {
     return block;
 }
 
-function addResultTable(result, pagination) {
+function addResultTable(result, pagination, extraData) {
     const wrapper = document.createElement('div');
     wrapper.className = 'result-wrapper';
     
@@ -128,8 +128,25 @@ function addResultTable(result, pagination) {
         return wrapper;
     }
 
-    // 存储结果数据供导出使用
+    wrapper.dataset.allRows = JSON.stringify(rows);
+    wrapper.dataset.columns = JSON.stringify(columns);
     wrapper.dataset.resultData = JSON.stringify({ columns, rows });
+
+    if (extraData) {
+        wrapper.dataset.historyId = extraData.historyId || '';
+        wrapper.dataset.sql = extraData.sql || '';
+        wrapper.dataset.question = extraData.question || '';
+        wrapper.dataset.conversationId = extraData.conversationId || '';
+    }
+
+    const pageSize = (pagination && pagination.page_size) || 100;
+    const currentPage = (pagination && pagination.page) || 1;
+    const totalRows = (pagination && pagination.total_rows) || rows.length;
+    const totalPages = (pagination && pagination.total_pages) || Math.ceil(totalRows / pageSize);
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = Math.min(startIdx + pageSize, totalRows);
+    const pageRows = rows.slice(startIdx, endIdx);
 
     let html = '<div class="result-header"><span class="result-title">📊 查询结果</span><button class="btn-export" onclick="showExportMenu(this)">导出</button></div>';
     html += '<div class="result-table-wrapper"><table class="result-table">';
@@ -137,8 +154,8 @@ function addResultTable(result, pagination) {
     for (const col of columns) {
         html += `<th>${escapeHtml(String(col))}</th>`;
     }
-    html += '</tr></thead><tbody>';
-    for (const row of rows) {
+    html += '</tr></thead><tbody class="result-tbody">';
+    for (const row of pageRows) {
         html += '<tr>';
         for (const cell of row) {
             html += `<td>${escapeHtml(String(cell ?? 'NULL'))}</td>`;
@@ -147,27 +164,26 @@ function addResultTable(result, pagination) {
     }
     html += '</tbody></table></div>';
 
-    let meta = '';
-    if (pagination && pagination.total_rows > 0) {
-        const start = (pagination.page - 1) * pagination.page_size + 1;
-        const end = Math.min(pagination.page * pagination.page_size, pagination.total_rows);
-        meta = `显示 ${start}-${end} 条，共 ${pagination.total_rows} 条`;
-    } else {
-        meta = `显示 ${row_count} 条`;
-    }
-    meta += ` (${sql_type})`;
-    html += `<div class="result-meta">${meta}</div>`;
+    html += `<div class="result-meta">显示 ${startIdx + 1}-${endIdx} 条，共 ${totalRows} 条 (${sql_type})</div>`;
 
-    if (pagination && pagination.total_pages > 1) {
+    if (totalPages > 1) {
         html += `<div class="result-pagination">`;
-        html += `<button class="btn-page" onclick="changePage(-1)" ${pagination.page <= 1 ? 'disabled' : ''}>上一页</button>`;
-        html += `<span class="page-info">第 ${pagination.page} / ${pagination.total_pages} 页</span>`;
-        html += `<button class="btn-page" onclick="changePage(1)" ${pagination.page >= pagination.total_pages ? 'disabled' : ''}>下一页</button>`;
+        html += `<button class="btn-page" onclick="changePage(-1, this)" ${currentPage <= 1 ? 'disabled' : ''}>上一页</button>`;
+        html += `<span class="page-info">第 ${currentPage} / ${totalPages} 页</span>`;
+        html += `<button class="btn-page" onclick="changePage(1, this)" ${currentPage >= totalPages ? 'disabled' : ''}>下一页</button>`;
         html += `</div>`;
     }
 
     wrapper.innerHTML = html;
-    wrapper.dataset.pagination = JSON.stringify(pagination || {});
+
+    wrapper.dataset.pagination = JSON.stringify({
+        page: currentPage,
+        page_size: pageSize,
+        total_rows: totalRows,
+        total_pages: totalPages,
+        sql_type: sql_type
+    });
+
     return wrapper;
 }
 
@@ -175,10 +191,12 @@ function showExportMenu(btn) {
     const resultWrapper = btn.closest('.result-wrapper');
     if (!resultWrapper) return;
     
+    const historyId = resultWrapper.dataset.historyId;
+    
     try {
         const data = JSON.parse(resultWrapper.dataset.resultData);
         if (data.columns && data.rows) {
-            ExportManager.showExportMenu(btn, data.columns, data.rows);
+            ExportManager.showExportMenu(btn, data.columns, data.rows, historyId);
         }
     } catch (e) {
         console.error('导出数据解析失败:', e);
@@ -186,22 +204,70 @@ function showExportMenu(btn) {
     }
 }
 
-function changePage(delta) {
-    const resultDiv = document.querySelector('.result-pagination')?.closest('.result-wrapper');
-    if (!resultDiv) return;
+function changePage(delta, btn) {
+    const wrapper = btn.closest('.result-wrapper');
+    if (!wrapper) return;
 
     let pagination = {};
     try {
-        pagination = JSON.parse(resultDiv.dataset.pagination || '{}');
-    } catch (e) {}
+        pagination = JSON.parse(wrapper.dataset.pagination || '{}');
+    } catch (e) {
+        return;
+    }
 
-    if (!pagination.page) return;
+    if (!pagination.page || !pagination.total_pages) return;
 
     const newPage = pagination.page + delta;
     if (newPage < 1 || newPage > pagination.total_pages) return;
 
-    state.pendingPageChange = { page: newPage, page_size: pagination.page_size };
-    sendQuery(state.pendingQuestion);
+    let allRows = [];
+    try {
+        allRows = JSON.parse(wrapper.dataset.allRows || '[]');
+    } catch (e) {
+        return;
+    }
+
+    const pageSize = pagination.page_size;
+    const totalRows = pagination.total_rows;
+    const totalPages = pagination.total_pages;
+    const sqlType = pagination.sql_type || '';
+
+    const startIdx = (newPage - 1) * pageSize;
+    const endIdx = Math.min(startIdx + pageSize, totalRows);
+    const pageRows = allRows.slice(startIdx, endIdx);
+
+    const tbody = wrapper.querySelector('.result-tbody');
+    if (tbody) {
+        let rowsHtml = '';
+        for (const row of pageRows) {
+            rowsHtml += '<tr>';
+            for (const cell of row) {
+                rowsHtml += `<td>${escapeHtml(String(cell ?? 'NULL'))}</td>`;
+            }
+            rowsHtml += '</tr>';
+        }
+        tbody.innerHTML = rowsHtml;
+    }
+
+    const metaEl = wrapper.querySelector('.result-meta');
+    if (metaEl) {
+        metaEl.textContent = `显示 ${startIdx + 1}-${endIdx} 条，共 ${totalRows} 条`;
+        if (sqlType) {
+            metaEl.textContent += ` (${sqlType})`;
+        }
+    }
+
+    const paginationEl = wrapper.querySelector('.result-pagination');
+    if (paginationEl) {
+        paginationEl.innerHTML = `
+            <button class="btn-page" onclick="changePage(-1, this)" ${newPage <= 1 ? 'disabled' : ''}>上一页</button>
+            <span class="page-info">第 ${newPage} / ${totalPages} 页</span>
+            <button class="btn-page" onclick="changePage(1, this)" ${newPage >= totalPages ? 'disabled' : ''}>下一页</button>
+        `;
+    }
+
+    pagination.page = newPage;
+    wrapper.dataset.pagination = JSON.stringify(pagination);
 }
 
 async function sendQuery(question) {
@@ -234,11 +300,6 @@ async function sendNaturalLanguageQuery(question) {
             conversation_id: state.currentConversationId
         };
 
-        if (state.pendingPageChange) {
-            queryParams.page = state.pendingPageChange.page;
-            queryParams.page_size = state.pendingPageChange.page_size;
-            state.pendingPageChange = null;
-        }
         state.pendingQuestion = question;
 
         contentDiv.innerHTML = '<div class="streaming-indicator">正在生成 SQL...</div>';
@@ -265,7 +326,7 @@ async function sendNaturalLanguageQuery(question) {
             };
             showSQLConfirmDialog(previewData);
         } else {
-            await executeConfirmedQuery(queryParams, contentDiv, msgDiv);
+            await executeConfirmedQuery(queryParams, contentDiv, msgDiv, question, previewData.sql, state.currentConversationId);
         }
     } catch (err) {
         contentDiv.innerHTML = `<div class="error-message">${escapeHtml(err.message)}</div>`;
@@ -347,7 +408,12 @@ async function sendDirectSQL(sql) {
         contentDiv.appendChild(addSQLBlock(data.sql));
 
         if (data.result) {
-            contentDiv.appendChild(addResultTable(data.result, data.pagination));
+            contentDiv.appendChild(addResultTable(data.result, data.pagination, {
+                historyId: data.history_id,
+                sql: data.sql,
+                question: sql,
+                conversationId: state.currentConversationId
+            }));
         }
     } catch (err) {
         contentDiv.innerHTML = `<div class="error-message">${escapeHtml(err.message)}</div>`;

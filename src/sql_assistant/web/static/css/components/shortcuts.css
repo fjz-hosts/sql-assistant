@@ -68,8 +68,12 @@
 }
 
 .shortcuts-panel-body::-webkit-scrollbar-thumb {
-    background: var(--bg-tertiary);
+    background: var(--accent);
     border-radius: 3px;
+}
+
+.shortcuts-panel-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hover);
 }
 
 .shortcuts-category {
@@ -155,7 +159,7 @@
 .shortcut-key.recording {
     color: var(--accent);
     border-color: var(--accent);
-    background: rgba(88, 166, 255, 0.1);
+    background: rgba(var(--accent-rgb), 0.1);
     animation: pulse-border 1s ease-in-out infinite;
 }
 
@@ -255,7 +259,7 @@
     text-align: center;
     padding: 8px;
     margin-top: 8px;
-    background: rgba(88, 166, 255, 0.08);
+    background: rgba(var(--accent-rgb), 0.08);
     border-radius: var(--radius-sm);
     border: 1px dashed var(--accent);
 }

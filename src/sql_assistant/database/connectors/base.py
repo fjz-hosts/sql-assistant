@@ -66,6 +66,10 @@ class BaseConnector(ABC):
         """
         ...
 
+    @property
+    def has_connection(self) -> bool:
+        return True
+
     @staticmethod
     def classify_sql(sql: str) -> str:
         """判断 SQL 语句类型（忽略前导注释和空行）

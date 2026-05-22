@@ -1,4 +1,4 @@
-"""数据库连接管理器 - 统一管理所有数据库连接"""
+"""数据库连接管理器 - 统一管理所有数据库连接（含连接池）"""
 
 from typing import Optional
 
@@ -10,17 +10,29 @@ from .connectors.sqlserver import SQLServerConnector
 from .connectors.postgresql import PostgreSQLConnector
 from .connectors.redis import RedisConnector
 from .connectors.mongodb import MongoDBConnector
+from .pool import ConnectionPool
+
+POOL_MIN_SIZE = 2
+POOL_MAX_SIZE = 10
+POOL_ACQUIRE_TIMEOUT = 30.0
+
+_VALIDATION_QUERIES: dict[str, str] = {
+    "mysql": "SELECT 1",
+    "postgresql": "SELECT 1",
+    "sqlserver": "SELECT 1",
+}
 
 
 class DatabaseManager:
-    """数据库连接管理器"""
+    """数据库连接管理器（集成连接池）"""
 
     def __init__(self):
         self._connectors: dict[str, BaseConnector] = {}
+        self._pools: dict[str, ConnectionPool] = {}
         self._schema_cache: dict[str, dict] = {}
 
-    def _create_connector(self, config: DatabaseConfig) -> BaseConnector:
-        """根据配置创建对应的连接器"""
+    def _create_connector(self, config: DatabaseConfig, use_pool: bool = True) -> BaseConnector:
+        """根据配置创建对应的连接器（含连接池）"""
         connector_classes = {
             "mysql": MySQLConnector,
             "sqlserver": SQLServerConnector,
@@ -32,16 +44,53 @@ class DatabaseManager:
         if cls is None:
             raise ValueError(f"不支持的数据库类型: {config.db_type}")
 
-        return cls(
-            host=config.host,
-            port=config.get_port(),
-            user=config.user,
-            password=config.password,
-            database=config.database,
-        )
+        pool = None
+        if use_pool and config.db_type in _VALIDATION_QUERIES:
+            if cls == MySQLConnector:
+                factory = MySQLConnector.create_connection_factory(
+                    config.host, config.get_port(), config.user, config.password, config.database
+                )
+            elif cls == PostgreSQLConnector:
+                factory = PostgreSQLConnector.create_connection_factory(
+                    config.host, config.get_port(), config.user, config.password, config.database
+                )
+            elif cls == SQLServerConnector:
+                factory = SQLServerConnector.create_connection_factory(
+                    config.host, config.get_port(), config.user, config.password, config.database
+                )
+            else:
+                factory = None
+
+            if factory:
+                pool = ConnectionPool(
+                    factory=factory,
+                    min_size=POOL_MIN_SIZE,
+                    max_size=POOL_MAX_SIZE,
+                    validation_query=_VALIDATION_QUERIES[config.db_type],
+                    acquire_timeout=POOL_ACQUIRE_TIMEOUT,
+                )
+
+        kwargs = {
+            "host": config.host,
+            "port": config.get_port(),
+            "user": config.user,
+            "password": config.password,
+            "database": config.database,
+        }
+
+        if pool:
+            kwargs["pool"] = pool
+
+        connector = cls(**kwargs)
+
+        if pool:
+            config_name = config.name
+            self._pools[config_name] = pool
+
+        return connector
 
     async def get_connector(self) -> BaseConnector:
-        """获取当前激活的数据库连接器（自动连接）"""
+        """获取当前激活的数据库连接器（自动创建连接池）"""
         config = get_config_manager().get_active_database()
         if not config:
             raise ValueError("未配置数据库，请先在设置中添加数据库连接")
@@ -49,7 +98,8 @@ class DatabaseManager:
         key = config.name
         if key not in self._connectors:
             connector = self._create_connector(config)
-            await connector.connect()
+            if key not in self._pools:
+                await connector.connect()
             self._connectors[key] = connector
 
         return self._connectors[key]
@@ -86,6 +136,9 @@ class DatabaseManager:
             if cache_key in self._connectors:
                 await self._connectors[cache_key].disconnect()
                 del self._connectors[cache_key]
+            if cache_key in self._pools:
+                self._pools[cache_key].close()
+                del self._pools[cache_key]
         return await self.get_schema(force_refresh=True)
 
     async def get_schema_text(self) -> str:
@@ -140,7 +193,7 @@ class DatabaseManager:
         if not config:
             return {"success": False, "error": "未配置数据库连接"}
 
-        connector = self._create_connector(config)
+        connector = self._create_connector(config, use_pool=False)
         try:
             result = await connector.test_connection()
             return result
@@ -151,7 +204,7 @@ class DatabaseManager:
 
     async def test_connection(self, config: DatabaseConfig) -> dict:
         """测试指定配置的连接"""
-        connector = self._create_connector(config)
+        connector = self._create_connector(config, use_pool=False)
         try:
             result = await connector.test_connection()
             return result
@@ -161,13 +214,16 @@ class DatabaseManager:
             await connector.disconnect()
 
     async def close_all(self):
-        """关闭所有连接"""
+        """关闭所有连接和连接池"""
         for connector in self._connectors.values():
             await connector.disconnect()
         self._connectors.clear()
 
+        for pool in self._pools.values():
+            pool.close()
+        self._pools.clear()
 
-# 全局单例
+
 _db_manager: Optional[DatabaseManager] = None
 
 

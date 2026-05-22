@@ -325,7 +325,7 @@
 .insights-outlier-count {
     font-size: 12px;
     padding: 2px 8px;
-    background: rgba(248, 81, 73, 0.15);
+    background: rgba(var(--danger-rgb), 0.15);
     color: var(--danger);
     border-radius: 10px;
 }
@@ -370,17 +370,17 @@
 }
 
 .insights-trend-badge.increasing {
-    background: rgba(63, 185, 80, 0.15);
+    background: rgba(var(--success-rgb), 0.15);
     color: var(--success);
 }
 
 .insights-trend-badge.decreasing {
-    background: rgba(248, 81, 73, 0.15);
+    background: rgba(var(--danger-rgb), 0.15);
     color: var(--danger);
 }
 
 .insights-trend-badge.stable {
-    background: rgba(88, 166, 255, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
     color: var(--accent);
 }
 

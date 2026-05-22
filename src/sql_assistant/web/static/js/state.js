@@ -15,7 +15,6 @@ const state = {
     conversations: [],
     llmModels: {},
     streamingEnabled: false,
-    pendingPageChange: null,
     pendingQuestion: '',
     queryMode: 'nl',
 };

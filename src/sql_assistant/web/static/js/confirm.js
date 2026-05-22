@@ -66,7 +66,7 @@ async function confirmAndExecuteSQL() {
         sql: sql
     };
 
-    await executeConfirmedQuery(queryParams, contentDiv, msgDiv);
+    await executeConfirmedQuery(queryParams, contentDiv, msgDiv, question, sql, conversationId);
 }
 
 async function executeConfirmedDirectSQL(sql, conversationId, contentDiv, msgDiv) {
@@ -83,7 +83,12 @@ async function executeConfirmedDirectSQL(sql, conversationId, contentDiv, msgDiv
         if (!data.success) {
             contentDiv.innerHTML += `<div class="error-message">${escapeHtml(data.error)}</div>`;
         } else if (data.result) {
-            contentDiv.appendChild(addResultTable(data.result, data.pagination));
+            contentDiv.appendChild(addResultTable(data.result, data.pagination, {
+                historyId: data.history_id,
+                sql: data.sql,
+                question: sql,
+                conversationId: conversationId
+            }));
         }
     } catch (err) {
         const loadingDots = contentDiv.querySelector('.loading-dots');
@@ -95,16 +100,20 @@ async function executeConfirmedDirectSQL(sql, conversationId, contentDiv, msgDiv
     loadConversations();
 }
 
-async function executeConfirmedQuery(queryParams, contentDiv, msgDiv) {
+async function executeConfirmedQuery(queryParams, contentDiv, msgDiv, question, sql, conversationId) {
     try {
         const data = await API.post('/api/query', queryParams);
 
-        // 移除 loading 动画
         const loadingDots = contentDiv.querySelector('.loading-dots');
         if (loadingDots) loadingDots.remove();
 
         if (data.result) {
-            contentDiv.appendChild(addResultTable(data.result, data.pagination));
+            contentDiv.appendChild(addResultTable(data.result, data.pagination, {
+                historyId: data.history_id,
+                sql: data.sql,
+                question: question,
+                conversationId: conversationId
+            }));
         }
 
         if (data.error && !data.result) {

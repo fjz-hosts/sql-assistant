@@ -20,7 +20,7 @@
 
 .config-card.active {
     border-color: var(--accent);
-    background: rgba(88,166,255,0.05);
+    background: rgba(var(--accent-rgb), 0.05);
 }
 
 .config-card:hover { border-color: var(--text-muted); }
@@ -71,7 +71,7 @@
 }
 
 .config-card .btn-sm:hover { background: var(--bg-primary); color: var(--text-primary); }
-.config-card .btn-sm.active-btn { background: rgba(63,185,80,0.15); color: var(--success); border-color: rgba(63,185,80,0.3); }
+.config-card .btn-sm.active-btn { background: rgba(var(--success-rgb), 0.15); color: var(--success); border-color: rgba(var(--success-rgb), 0.3); }
 .config-card .btn-sm.danger { color: var(--danger); }
 
 .btn-add {

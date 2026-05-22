@@ -187,7 +187,7 @@
 
 .health-error {
     padding: 12px;
-    background: rgba(248, 81, 73, 0.1);
+    background: rgba(var(--danger-rgb), 0.1);
     border: 1px solid var(--danger);
     border-radius: var(--radius);
     color: var(--danger);
@@ -272,17 +272,17 @@
 }
 
 .status-badge.success {
-    background: rgba(63, 185, 80, 0.15);
+    background: rgba(var(--success-rgb), 0.15);
     color: var(--success);
 }
 
 .status-badge.danger {
-    background: rgba(248, 81, 73, 0.15);
+    background: rgba(var(--danger-rgb), 0.15);
     color: var(--danger);
 }
 
 .status-badge.warning {
-    background: rgba(210, 153, 34, 0.15);
+    background: rgba(var(--warning-rgb), 0.15);
     color: var(--warning);
 }
 
@@ -436,7 +436,7 @@
 }
 
 .index-badge.unique {
-    background: rgba(88, 166, 255, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
     color: var(--accent);
 }
 

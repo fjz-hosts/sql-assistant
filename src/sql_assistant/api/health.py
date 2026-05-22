@@ -72,7 +72,7 @@ async def health_tables():
     try:
         checker = await get_health_checker()
 
-        if not checker.connector._conn:
+        if not checker.connector.has_connection:
             raise HTTPException(status_code=400, detail="数据库未连接")
 
         tables = await checker.get_table_stats()
@@ -113,7 +113,7 @@ async def health_indexes():
     try:
         checker = await get_health_checker()
 
-        if not checker.connector._conn:
+        if not checker.connector.has_connection:
             raise HTTPException(status_code=400, detail="数据库未连接")
 
         indexes = await checker.get_index_stats()

@@ -115,7 +115,7 @@
 }
 
 .btn-service-start:hover {
-    background: #2ea043;
+    background: var(--success-hover);
 }
 
 .btn-service-start:disabled {
@@ -140,7 +140,7 @@
 }
 
 .btn-service-stop:hover {
-    background: #b0881a;
+    background: var(--warning-hover);
 }
 
 .btn-service-stop:disabled {

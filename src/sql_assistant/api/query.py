@@ -303,16 +303,28 @@ async def execute_query(request: QueryRequest):
 
     try:
         result = await db.execute(sql_text)
-        result_dict = _result_to_dict(result)
+        full_result = _result_to_dict(result)
 
-        total_rows = result_dict.get("row_count", 0)
+        total_rows = full_result.get("row_count", 0)
         total_pages = (total_rows + request.page_size - 1) // request.page_size if total_rows > 0 else 1
 
-        if total_rows > 0 and request.page > 1:
-            start_idx = (request.page - 1) * request.page_size
-            end_idx = start_idx + request.page_size
-            result_dict["rows"] = result_dict["rows"][start_idx:end_idx]
-            result_dict["row_count"] = len(result_dict["rows"])
+        history_id = await history.add_record(
+            question=request.question,
+            sql=sql_text,
+            result=full_result,
+            db_type=db_type,
+            llm_provider=active_llm.provider,
+            success=True,
+            conversation_id=request.conversation_id,
+        )
+
+        paginated_result = {
+            "columns": full_result.get("columns", []),
+            "rows": full_result.get("rows", []),
+            "row_count": total_rows,
+            "affected_rows": full_result.get("affected_rows"),
+            "sql_type": full_result.get("sql_type", ""),
+        }
 
         pagination = {
             "page": request.page,
@@ -321,21 +333,11 @@ async def execute_query(request: QueryRequest):
             "total_pages": total_pages,
         }
 
-        history_id = await history.add_record(
-            question=request.question,
-            sql=sql_text,
-            result=result_dict,
-            db_type=db_type,
-            llm_provider=active_llm.provider,
-            success=True,
-            conversation_id=request.conversation_id,
-        )
-
         return QueryResponse(
             success=True,
             question=request.question,
             sql=sql_text,
-            result=result_dict,
+            result=paginated_result,
             history_id=history_id,
             conversation_id=request.conversation_id,
             pagination=pagination,

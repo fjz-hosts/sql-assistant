@@ -129,7 +129,7 @@
 }
 
 .history-item.active {
-    background: rgba(88,166,255,0.1);
+    background: rgba(var(--accent-rgb), 0.1);
     border-color: var(--accent);
 }
 

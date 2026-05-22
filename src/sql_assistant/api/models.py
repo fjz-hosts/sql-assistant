@@ -323,6 +323,12 @@ class ExportResponse(BaseModel):
     error: Optional[str] = None
 
 
+class ExportByHistoryRequest(BaseModel):
+    """根据历史记录ID导出请求模型"""
+    history_id: int = Field(description="查询历史记录ID")
+    format: str = Field(default="csv", description="导出格式: csv / json / excel")
+
+
 # ---- Explain Plan ----
 
 class ExplainRequest(BaseModel):

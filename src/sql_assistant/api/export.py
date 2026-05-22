@@ -9,7 +9,8 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from .models import ExportRequest, ExportResponse
+from .models import ExportRequest, ExportResponse, ExportByHistoryRequest
+from .dependencies import get_history
 
 router = APIRouter()
 
@@ -112,6 +113,65 @@ async def export_data(request: ExportRequest):
             row_count=len(request.rows)
         )
     
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
+
+@router.post("/export/full-download")
+async def export_full_download(request: ExportByHistoryRequest):
+    """
+    根据历史记录 ID 导出完整的查询结果并直接下载
+
+    从历史记录中读取完整的查询结果（所有行），导出为指定格式。
+    """
+    try:
+        history = get_history()
+        record = await history.get_record(request.history_id)
+        if not record:
+            raise HTTPException(status_code=404, detail="历史记录不存在")
+
+        result_json = record.get("result_json")
+        if not result_json:
+            raise HTTPException(status_code=400, detail="该记录没有查询结果数据")
+
+        result = json.loads(result_json)
+        columns = result.get("columns", [])
+        rows = result.get("rows", [])
+
+        if not columns or not rows:
+            raise HTTPException(status_code=400, detail="导出数据为空")
+
+        format_type = request.format.lower()
+
+        if format_type == 'csv':
+            content = _convert_to_csv(columns, rows)
+            content_type = 'text/csv;charset=utf-8'
+            filename = f'query_result_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        elif format_type == 'json':
+            content = _convert_to_json(columns, rows)
+            content_type = 'application/json;charset=utf-8'
+            filename = f'query_result_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        elif format_type == 'excel':
+            content = _convert_to_excel(columns, rows)
+            content_type = 'application/vnd.ms-excel;charset=utf-8'
+            filename = f'query_result_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xls'
+        else:
+            raise HTTPException(status_code=400, detail=f"不支持的导出格式: {request.format}")
+
+        if format_type == 'csv':
+            content = '\uFEFF' + content
+
+        return StreamingResponse(
+            iter([content]),
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": content_type,
+            },
+        )
+
     except HTTPException:
         raise
     except Exception as e:

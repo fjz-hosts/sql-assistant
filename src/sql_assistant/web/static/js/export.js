@@ -99,20 +99,19 @@ class ExportManager {
      * 显示导出格式选择菜单
      * @param {HTMLElement} anchorEl - 锚点元素（按钮位置）
      * @param {Array} columns - 列名数组
-     * @param {Array} rows - 数据行数组
+     * @param {Array} rows - 数据行数组（当前页数据，仅用于无historyId时的降级导出）
+     * @param {string} historyId - 历史记录ID，提供时使用服务端完整导出
      */
-    static showExportMenu(anchorEl, columns, rows) {
-        // 移除已存在的菜单
+    static showExportMenu(anchorEl, columns, rows, historyId) {
         const existingMenu = document.querySelector('.export-menu');
         if (existingMenu) {
             existingMenu.remove();
         }
         
-        // 创建菜单
         const menu = document.createElement('div');
         menu.className = 'export-menu';
         menu.innerHTML = `
-            <div class="export-menu-header">选择导出格式</div>
+            <div class="export-menu-header">选择导出格式${historyId ? ' (全部数据)' : ' (当前页)'}</div>
             <button class="export-menu-item" data-format="csv">
                 <span>📄</span> CSV
             </button>
@@ -124,36 +123,38 @@ class ExportManager {
             </button>
         `;
         
-        // 获取锚点元素位置
         const rect = anchorEl.getBoundingClientRect();
         menu.style.position = 'fixed';
         menu.style.top = `${rect.top - menu.offsetHeight - 8}px`;
         menu.style.right = `${window.innerWidth - rect.right + 8}px`;
         
-        // 添加点击事件
         menu.querySelectorAll('.export-menu-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const format = e.currentTarget.dataset.format;
-                const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-                const filename = `query_result_${timestamp}`;
                 
-                switch (format) {
-                    case 'csv':
-                        this.exportToCSV(columns, rows, filename);
-                        break;
-                    case 'json':
-                        this.exportToJSON(columns, rows, filename);
-                        break;
-                    case 'excel':
-                        this.exportToExcel(columns, rows, filename);
-                        break;
+                if (historyId) {
+                    this.exportFullByHistory(historyId, format);
+                } else {
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    const filename = `query_result_${timestamp}`;
+                    
+                    switch (format) {
+                        case 'csv':
+                            this.exportToCSV(columns, rows, filename);
+                            break;
+                        case 'json':
+                            this.exportToJSON(columns, rows, filename);
+                            break;
+                        case 'excel':
+                            this.exportToExcel(columns, rows, filename);
+                            break;
+                    }
                 }
                 
                 menu.remove();
             });
         });
         
-        // 点击外部关闭菜单
         document.addEventListener('click', function closeMenu(e) {
             if (!menu.contains(e.target) && e.target !== anchorEl) {
                 menu.remove();
@@ -162,9 +163,43 @@ class ExportManager {
         });
         
         document.body.appendChild(menu);
-        
-        // 自动聚焦到菜单
         menu.focus();
+    }
+
+    /**
+     * 通过服务端导出完整查询结果（所有数据行）
+     * @param {string} historyId - 历史记录ID
+     * @param {string} format - 导出格式: csv / json / excel
+     */
+    static async exportFullByHistory(historyId, format) {
+        try {
+            const response = await fetch('/api/export/full-download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    history_id: parseInt(historyId),
+                    format: format
+                })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || '导出失败');
+            }
+
+            const blob = await response.blob();
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = `query_result.${format === 'excel' ? 'xls' : format}`;
+            if (disposition) {
+                const match = disposition.match(/filename="?(.+?)"?$/);
+                if (match) filename = match[1];
+            }
+            
+            this._downloadBlob(blob, filename);
+        } catch (err) {
+            console.error('服务端导出失败:', err);
+            showToast('导出失败: ' + err.message, 'error');
+        }
     }
 
     /**

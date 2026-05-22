@@ -91,7 +91,7 @@ class MongoDBConnector(BaseConnector):
                     filter_obj = query.get("filter", {})
                     projection = query.get("projection", None)
                     sort_list = query.get("sort", None)
-                    limit_val = query.get("limit", 100)
+                    limit_val = query.get("limit", 0)
 
                     cursor = collection.find(filter_obj, projection)
                     if sort_list:
