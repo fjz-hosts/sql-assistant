@@ -110,6 +110,8 @@ Visit **http://localhost:5010** to start using!
 - **Multi-language Support**: Supports Chinese and English query descriptions
 - **Context Awareness**: Generates accurate SQL based on database table structure
 
+![Natural Language to SQL](screenshots/feature-main.png)
+
 ### 2. Multi-database Connections
 
 - **MySQL**: Full support for SELECT / INSERT / UPDATE / DELETE operations
@@ -131,11 +133,15 @@ Visit **http://localhost:5010** to start using!
 - **8 Theme Colors**: Blue, Purple, Pink, Red, Orange, Yellow, Green, Cyan
 - **Theme Memory**: Automatically remembers user theme preferences
 
+![Light Theme](screenshots/feature-light-theme.png)
+
 ### 6. Web Configuration Interface
 
 - **LLM Configuration Management**: Add, edit, delete LLM API Keys
 - **Database Configuration Management**: Add, edit, delete database connections
 - **Active Status Switch**: One-click switch between current LLM and database
+
+![Settings Panel](screenshots/feature-settings.png)
 
 ### 7. Database Backup
 
@@ -145,6 +151,8 @@ Visit **http://localhost:5010** to start using!
 - **Backup Management**: View backup list, get backup details, delete backup files
 - **Data Recovery**: Restore table structure and data from backup files to current database
 
+![Database Backup](screenshots/feature-backup.png)
+
 ### 8. SQL Template/Favorite
 
 - **Template Management**: Create, edit, delete SQL templates for frequently used queries
@@ -152,12 +160,16 @@ Visit **http://localhost:5010** to start using!
 - **Quick Insert**: Insert templates directly into the query input box
 - **Favorite Marking**: Mark frequently used SQL statements as favorites
 
+![SQL Templates](screenshots/feature-templates.png)
+
 ### 9. Execution Plan Analysis
 
 - **Visual Execution Plan**: View graphical execution plan for SELECT statements
 - **Cost Analysis**: Analyze query cost and performance metrics
 - **Optimization Suggestions**: Get AI-powered optimization recommendations
 - **Index Utilization**: Check index usage and identify missing indexes
+
+![Execution Plan](screenshots/feature-explain.png)
 
 ### 10. Database Health Check/Monitoring
 
@@ -167,6 +179,8 @@ Visit **http://localhost:5010** to start using!
 - **Performance Metrics**: Uptime, connection count, slow queries, QPS
 - **Multi-database Support**: MySQL, PostgreSQL, SQL Server, Redis, MongoDB
 
+![Health Check](screenshots/feature-health.png)
+
 ### 11. Auto-Start System Service
 
 - **One-Click Install**: Install SQL Assistant as a system service for auto-start on boot
@@ -175,6 +189,61 @@ Visit **http://localhost:5010** to start using!
 - **Easy Uninstall**: One-click removal of the auto-start service without affecting project files
 - **Shortcut Support**: Quick toggle via `Ctrl+Shift+S` or navbar button
 
+![System Service](screenshots/feature-service.png)
+
+### 12. Data Insights
+
+- **Data Summary**: Automatically generate summary statistics for tables
+- **Outlier Detection**: Identify abnormal data patterns
+- **Trend Analysis**: Analyze data trends over time
+- **Report Generation**: Export insights as reports
+
+![Data Insights](screenshots/feature-insights.png)
+
+### 13. Automation Task Scheduling
+
+- **Flexible Scheduling**: Create timed automation tasks for database operations (backup, health checks, insights generation)
+- **Multiple Triggers**: Support for cron-style scheduling (daily, weekly, monthly) and interval-based execution
+- **Task Types**:
+  - **Backup Tasks**: Automatic full or incremental database backups on schedule
+  - **Health Check Tasks**: Periodic database health monitoring with alert capabilities
+  - **Insights Tasks**: Scheduled data analysis and report generation
+- **Retention Policy**: Automatically delete oldest backups when exceeding user-defined retention count
+- **Manual Trigger**: Execute automation tasks immediately without waiting for schedule
+- **Task Management**: View, edit, delete, enable/disable automation tasks
+- **No Default Activation**: All tasks require explicit user creation (privacy-first design)
+
+### 14. Keyboard Shortcuts
+
+- **Global Shortcuts**: Powerful keyboard shortcuts for efficient workflow
+- **Customizable**: Customize shortcut keybindings to suit your preferences
+- **Quick Access**: Press `?` to open the shortcuts panel for reference
+
+![Keyboard Shortcuts](screenshots/feature-shortcuts.png)
+
+#### Default Shortcuts
+
+| Shortcut | Description | Category |
+|----------|-------------|----------|
+| `Ctrl+Enter` | 发送查询 | 查询 |
+| `Ctrl+N` | 新建对话 | 对话 |
+| `Ctrl+K` | 聚焦输入框 | 导航 |
+| `Ctrl+/` | 切换SQL模板面板 | 面板 |
+| `Ctrl+Shift+E` | 切换执行计划面板 | 面板 |
+| `Ctrl+Shift+H` | 切换健康检查面板 | 面板 |
+| `Ctrl+Shift+I` | 切换数据洞察面板 | 面板 |
+| `Ctrl+,` | 打开设置 | 导航 |
+| `Ctrl+Shift+D` | 切换主题 | 外观 |
+| `Escape` | 关闭面板/弹窗 | 导航 |
+| `Ctrl+Shift+R` | 刷新数据库 Schema | 查询 |
+| `Ctrl+Shift+M` | 切换查询模式 (NL/SQL) | 查询 |
+| `Ctrl+L` | 清空聊天区域 | 对话 |
+| `Ctrl+B` | 切换侧边栏显示 | 外观 |
+| `Ctrl+Shift+C` | 复制最后一条 SQL | 查询 |
+| `Ctrl+Shift+Delete` | 删除当前对话 | 对话 |
+| `Ctrl+S` | 保存当前SQL为模板 | 查询 |
+| `?` | 打开快捷键面板 | 导航 |
+| `Ctrl+Shift+S` | 安装/卸载开机自启服务 | 导航 |
 
 ## <a id="system-architecture"></a> 🏗️ System Architecture
 
